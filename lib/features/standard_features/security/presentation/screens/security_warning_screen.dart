@@ -1,0 +1,132 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
+import 'package:tahsel_dashboard/core/utils/app_colors.dart';
+import 'package:tahsel_dashboard/core/utils/app_strings.dart';
+import 'package:tahsel_dashboard/core/utils/styles.dart';
+import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
+
+class SecurityWarningScreen extends StatelessWidget {
+  final bool isRooted;
+  final bool isDevMode;
+
+  const SecurityWarningScreen({
+    super.key,
+    required this.isRooted,
+    required this.isDevMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.scafoldBackGround,
+
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.security_update_warning_rounded,
+                size: 100.h,
+                color: AppColors.redColor,
+              ),
+              SizedBox(height: 32.h),
+              TextWidget(
+                AppStrings.securityWarningTitle.tr(),
+                style: TextStyles.font28WeightBoldWhite().copyWith(
+                  color: AppColors.textColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16.h),
+              TextWidget(
+                AppStrings.securityWarningDescription.tr(),
+                style: TextStyles.font16Weight400Text().copyWith(
+                  color: AppColors.subTitleColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 40.h),
+              Container(
+                padding: EdgeInsets.all(20.h),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: AppColors.isDark ? 0.3 : 0.05,
+                      ),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    if (isRooted)
+                      _buildConditionItem(
+                        context,
+                        icon: Icons.dangerous_rounded,
+                        title: AppStrings.securityWarningRootedTitle.tr(),
+                        subtitle: AppStrings.securityWarningRootedSubtitle.tr(),
+                      ),
+                    if (isRooted && isDevMode)
+                      Divider(height: 32.h, color: AppColors.dividerColor),
+                    if (isDevMode)
+                      _buildConditionItem(
+                        context,
+                        icon: Icons.developer_mode_rounded,
+                        title: AppStrings.securityWarningDevModeTitle.tr(),
+                        subtitle: AppStrings.securityWarningDevModeSubtitle
+                            .tr(),
+                      ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 48.h),
+              TextWidget(
+                AppStrings.securityWarningFooter.tr(),
+                style: TextStyles.font14Weight400RightAligned().copyWith(
+                  color: AppColors.textColor.withValues(alpha: 0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConditionItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.redColor, size: 32.h),
+        SizedBox(width: 16.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextWidget(title, style: TextStyles.font16WeightBoldText()),
+              SizedBox(height: 4.h),
+              TextWidget(
+                subtitle,
+                style: TextStyles.font14Weight400RightAligned().copyWith(
+                  color: AppColors.textColor2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

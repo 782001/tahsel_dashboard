@@ -1,0 +1,14 @@
+import 'package:dartz/dartz.dart';
+import 'package:tahsel_dashboard/core/base_usecase/base_usecase.dart';
+import 'package:tahsel_dashboard/core/error/failures.dart';
+import 'package:tahsel_dashboard/features/standard_features/localization/domain/repositories/lang_repository.dart';
+
+class ChangeLangUseCase implements BaseUseCase<bool, String> {
+  final LangRepository langRepository;
+
+  ChangeLangUseCase({required this.langRepository});
+
+  @override
+  Future<Either<Failure, bool>> call(String langCode) async =>
+      await langRepository.changeLang(langCode: langCode);
+}
