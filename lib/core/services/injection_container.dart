@@ -19,6 +19,7 @@ import '../../features/standard_features/localization/domain/usecases/get_saved_
 import '../../features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import '../../features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import '../../features/standard_features/theme/presentation/cubit/theme_cubit.dart';
+import '../../features/admin/admin_di.dart';
 
 final sl = GetIt.instance;
 
@@ -34,8 +35,7 @@ Future<void> initDependencies() async {
   }
 
   //! Features
-
-
+  registerAdminDependencies();
 
   // localization
   /// -----localizationCubit------

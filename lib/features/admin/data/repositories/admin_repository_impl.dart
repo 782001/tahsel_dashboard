@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:tahsel_dashboard/core/error/failures.dart';
 import 'package:tahsel_dashboard/core/error/firebase_error_handler.dart';
 import 'package:tahsel_dashboard/core/models/paginated_result.dart';
@@ -24,6 +25,8 @@ class AdminRepositoryImpl implements AdminRepository {
       return Right(await action());
     } on FirebaseAuthException catch (e) {
       return Left(ServerFailure(FirebaseErrorHandler.getMessage(e)));
+    } on FirebaseFunctionsException catch (e) {
+      return Left(ServerFailure(e.message ?? e.code));
     } on FirebaseException catch (e) {
       return Left(ServerFailure(FirebaseErrorHandler.getMessage(e)));
     } catch (e) {

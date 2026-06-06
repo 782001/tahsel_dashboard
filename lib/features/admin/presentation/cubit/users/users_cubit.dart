@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel_dashboard/core/constants/admin_constants.dart';
-import 'package:tahsel_dashboard/features/admin/domain/entities/app_user.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/users/users_state.dart';
 
@@ -144,9 +143,15 @@ class UsersCubit extends Cubit<UsersState> {
 }
 
 class ExpirationCubit extends Cubit<UsersState> {
-  ExpirationCubit(this._getExpiring) : super(UsersInitial());
+  ExpirationCubit({
+    required GetExpiringUsersUseCase getExpiring,
+    required SubscriptionActionUseCase subscriptionAction,
+  })  : _getExpiring = getExpiring,
+        _subscriptionAction = subscriptionAction,
+        super(UsersInitial());
 
   final GetExpiringUsersUseCase _getExpiring;
+  final SubscriptionActionUseCase _subscriptionAction;
   int _withinDays = 7;
 
   Future<void> load({int? withinDays, bool refresh = false}) async {
@@ -181,5 +186,20 @@ class ExpirationCubit extends Cubit<UsersState> {
         cursor: page.lastCursor,
       )),
     );
+  }
+
+  Future<bool> quickRenew(String uid, {int days = 30}) async {
+    final result = await _subscriptionAction(SubscriptionParams(
+      uid: uid,
+      action: SubscriptionAction.renew,
+      days: days,
+    ));
+    return result.fold((f) {
+      emit(UsersError(f.message));
+      return false;
+    }, (_) {
+      load(withinDays: _withinDays, refresh: true);
+      return true;
+    });
   }
 }

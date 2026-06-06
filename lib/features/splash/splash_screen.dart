@@ -2,15 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:tahsel_dashboard/core/base_usecase/base_usecase.dart';
 import 'package:tahsel_dashboard/core/services/injection_container.dart';
 import 'package:tahsel_dashboard/core/services/navigator_service.dart';
 import 'package:tahsel_dashboard/core/services/security_service.dart';
-import 'package:tahsel_dashboard/core/storage/secure_storage_helper.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
-import 'package:tahsel_dashboard/core/utils/app_strings.dart';
 import 'package:tahsel_dashboard/core/utils/assets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_cubit.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_state.dart';
 import 'package:tahsel_dashboard/routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -57,68 +56,21 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
-      final secureStorage = sl<SecureStorageHelper>();
-
-      // 3. Load local session data (PRIORITY)
-      final String? token = await secureStorage.getData(key: 'token');
-      final String? userType = await secureStorage.getData(
-        key: AppStrings.userTypeKey,
-      );
-
-      if (token != null && token.isNotEmpty) {
-        // SUCCESS: Local session found
-        AppStrings.userToken = token;
-        AppStrings.userType = userType ?? AppStrings.cafe;
-
-        // 4. Navigate IMMEDIATELY to Main Layout (Offline-first)
-        // nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
-
-        // 5. BACKGROUND: Verify with Firebase if online (Optional/Non-blocking)
-        _verifySessionInBackground();
+      final authState = context.read<AuthCubit>().state;
+      if (authState is AuthAuthenticated) {
+        sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.adminShell);
       } else {
-        // FAILURE: No session, go to login
-        // nav().pushNamedAndRemoveUntil(AppRoutes.login);
-      }
-    }
-  }
-
-  /// Verifies the current Firebase session in the background.
-  /// If the session is invalid (user deleted/disabled), it triggers a logout.
-  void _verifySessionInBackground() async {
-    final bool hasInternet =
-        await sl<InternetConnectionChecker>().hasConnection;
-    if (!hasInternet) return;
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await user.reload();
-      } else {
-        // Firebase says no user but local said yes? Only clear if online.
-        if (hasInternet) {
-          _handleInvalidSession();
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await context.read<AuthCubit>().checkSession();
+          if (mounted && context.read<AuthCubit>().state is AuthAuthenticated) {
+            sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.adminShell);
+            return;
+          }
         }
+        sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.adminLogin);
       }
-    } catch (e) {
-      // Only logout if it's NOT a network error
-      if (e.toString().contains('network-request-failed') ||
-          e.toString().contains('connection-failed')) {
-        return; // Ignore network errors, keep local session
-      }
-      // User likely deleted or disabled on server
-      _handleInvalidSession();
     }
-  }
-
-  void _handleInvalidSession() async {
-
-    // Reset global strings
-    AppStrings.userToken = '';
-    AppStrings.userType = AppStrings.cafe;
-
-    // If user is already in the app, the AuthCubit listener will handle
-    // the redirection if it's set up, otherwise we can force a redirect here
-    // but typically AuthCubit.userChanges handles this.
   }
 
   @override

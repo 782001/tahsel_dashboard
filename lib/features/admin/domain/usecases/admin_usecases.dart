@@ -150,6 +150,15 @@ class CreateUserParams {
   final String fullName;
   final String? phoneNumber;
   final int subscriptionDays;
+
+  CreateUserParams({
+    required this.email,
+    required this.password,
+    required this.fullName,
+    this.phoneNumber,
+    this.subscriptionDays = 30,
+  });
+
   Map<String, dynamic> toMap() => {
         'email': email,
         'password': password,
@@ -172,6 +181,14 @@ class UpdateUserParams {
   final String? fullName;
   final String? email;
   final String? phoneNumber;
+
+  UpdateUserParams({
+    required this.uid,
+    this.fullName,
+    this.email,
+    this.phoneNumber,
+  });
+
   Map<String, dynamic> toMap() => {
         'uid': uid,
         if (fullName != null) 'fullName': fullName,
@@ -338,6 +355,14 @@ class NotificationParams {
   final String body;
   final String targetType;
   final List<String>? targetIds;
+
+  NotificationParams({
+    required this.title,
+    required this.body,
+    required this.targetType,
+    this.targetIds,
+  });
+
   Map<String, dynamic> toMap() => {
         'title': title,
         'body': body,

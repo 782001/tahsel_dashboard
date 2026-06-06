@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel_dashboard/core/base_usecase/base_usecase.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/user_detail/user_detail_state.dart';
 
@@ -9,31 +8,37 @@ class UserDetailCubit extends Cubit<UserDetailState> {
     required GetUserNotesUseCase getNotes,
     required GetUserSessionsUseCase getSessions,
     required UpdateUserUseCase updateUser,
+    required DeleteUserUseCase deleteUser,
+    required SuspendUserUseCase suspendUser,
+    required ActivateUserUseCase activateUser,
     required ResetPasswordUseCase resetPassword,
     required ForceLogoutUseCase forceLogout,
     required SubscriptionActionUseCase subscriptionAction,
     required ManageNoteUseCase manageNote,
-    required GetAuditLogsUseCase getAuditLogs,
   })  : _getUser = getUser,
         _getNotes = getNotes,
         _getSessions = getSessions,
         _updateUser = updateUser,
+        _deleteUser = deleteUser,
+        _suspendUser = suspendUser,
+        _activateUser = activateUser,
         _resetPassword = resetPassword,
         _forceLogout = forceLogout,
         _subscriptionAction = subscriptionAction,
         _manageNote = manageNote,
-        _getAuditLogs = getAuditLogs,
         super(UserDetailInitial());
 
   final GetUserByIdUseCase _getUser;
   final GetUserNotesUseCase _getNotes;
   final GetUserSessionsUseCase _getSessions;
   final UpdateUserUseCase _updateUser;
+  final DeleteUserUseCase _deleteUser;
+  final SuspendUserUseCase _suspendUser;
+  final ActivateUserUseCase _activateUser;
   final ResetPasswordUseCase _resetPassword;
   final ForceLogoutUseCase _forceLogout;
   final SubscriptionActionUseCase _subscriptionAction;
   final ManageNoteUseCase _manageNote;
-  final GetAuditLogsUseCase _getAuditLogs;
 
   String? _uid;
 
@@ -132,5 +137,51 @@ class UserDetailCubit extends Cubit<UserDetailState> {
       await load(_uid!);
       return true;
     });
+  }
+
+  Future<bool> editNote(String noteId, String content) async {
+    final result = await _manageNote(NoteActionParams(
+      uid: _uid!,
+      action: NoteAction.update,
+      noteId: noteId,
+      content: content,
+    ));
+    return result.fold((f) => false, (_) async {
+      await load(_uid!);
+      return true;
+    });
+  }
+
+  Future<bool> suspendUser() async {
+    emit(UserDetailActionLoading());
+    final result = await _suspendUser(_uid!);
+    return result.fold((f) {
+      emit(UserDetailError(f.message));
+      return false;
+    }, (_) async {
+      await load(_uid!);
+      return true;
+    });
+  }
+
+  Future<bool> activateUser() async {
+    emit(UserDetailActionLoading());
+    final result = await _activateUser(_uid!);
+    return result.fold((f) {
+      emit(UserDetailError(f.message));
+      return false;
+    }, (_) async {
+      await load(_uid!);
+      return true;
+    });
+  }
+
+  Future<bool> deleteUser() async {
+    emit(UserDetailActionLoading());
+    final result = await _deleteUser(_uid!);
+    return result.fold((f) {
+      emit(UserDetailError(f.message));
+      return false;
+    }, (_) => true);
   }
 }

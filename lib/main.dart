@@ -5,22 +5,24 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/services/injection_container.dart';
+import 'package:tahsel_dashboard/core/services/injection_container.dart' as di;
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tahsel_dashboard/core/config/locale/app_localizations_setup.dart';
-import 'package:tahsel_dashboard/core/services/injection_container.dart' as di;
-import 'package:tahsel_dashboard/core/services/injection_container.dart';
 import 'package:tahsel_dashboard/core/services/navigator_service.dart';
 import 'package:tahsel_dashboard/core/services/security_service.dart';
 import 'package:tahsel_dashboard/core/utils/app_constants.dart';
 
 import 'package:tahsel_dashboard/features/standard_features/error/presentation/screens/error_screen.dart';
 import 'package:tahsel_dashboard/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_cubit.dart';
 import 'package:tahsel_dashboard/features/standard_features/no-internet/no_internet.dart';
 import 'package:tahsel_dashboard/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel_dashboard/features/standard_features/theme/presentation/cubit/theme_state.dart';
 import 'package:tahsel_dashboard/firebase_options.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_state.dart';
 import 'package:tahsel_dashboard/routes/app_routes.dart';
 
 class AppScrollBehavior extends MaterialScrollBehavior {
@@ -84,7 +86,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        // BlocProvider(create: (context) => di.sl<AuthCubit>()),
+        BlocProvider(create: (context) => di.sl<AuthCubit>()..checkSession()),
         BlocProvider(create: (context) => di.sl<LocaleCubit>()..getSavedLang()),
         BlocProvider(create: (context) => di.sl<ThemeCubit>()),
         BlocProvider(create: (context) => di.sl<ConnectivityCubit>()),
@@ -159,7 +161,16 @@ class MyApp extends StatelessWidget {
                     initialRoute: AppRoutes.splash,
                     onGenerateRoute: AppRoutes.generateRoute,
                     builder: (context, child) {
-                      return NoInternetHandler(child: child!);
+                      return BlocListener<AuthCubit, AuthState>(
+                        listener: (context, state) {
+                          if (state is AuthUnauthenticated) {
+                            sl<NavigatorService>().pushNamedAndRemoveUntil(
+                              AppRoutes.adminLogin,
+                            );
+                          }
+                        },
+                        child: NoInternetHandler(child: child!),
+                      );
                     },
                   );
                 },
