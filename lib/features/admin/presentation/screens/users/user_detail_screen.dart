@@ -428,29 +428,20 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   Future<void> _resetPassword(BuildContext context) async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: TextWidget('admin_reset_password'.tr()),
-        content: TextField(
-          controller: controller,
-          obscureText: true,
-          decoration: InputDecoration(hintText: 'password'.tr()),
-        ),
+        content: TextWidget('admin_reset_password_email_hint'.tr()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: TextWidget('cancel'.tr())),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: TextWidget('confirm'.tr()),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: TextWidget('cancel'.tr())),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: TextWidget('confirm'.tr())),
         ],
       ),
     );
-    controller.dispose();
-    if (result != null && result.length >= 6 && mounted) {
-      final ok = await context.read<UserDetailCubit>().resetPassword(result);
-      if (ok) showSuccessToast('admin_password_reset'.tr());
+    if (confirmed == true && mounted) {
+      final ok = await context.read<UserDetailCubit>().resetPassword('');
+      if (ok) showSuccessToast('admin_reset_email_sent'.tr());
     }
   }
 

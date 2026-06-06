@@ -74,7 +74,6 @@ dependencies:
   firebase_core: ^4.6.0
   firebase_auth: ^6.3.0
   cloud_firestore: ^6.2.0
-  cloud_functions: ^6.0.6
   intl: ^0.20.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0

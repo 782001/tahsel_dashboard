@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tahsel_dashboard/core/services/cloud_functions_service.dart';
 import 'package:tahsel_dashboard/core/services/injection_container.dart';
 import 'package:tahsel_dashboard/features/admin/data/datasources/admin_remote_data_source.dart';
 import 'package:tahsel_dashboard/features/admin/data/repositories/admin_repository_impl.dart';
+import 'package:tahsel_dashboard/features/admin/data/services/admin_audit_service.dart';
+import 'package:tahsel_dashboard/features/admin/data/services/admin_auth_service.dart';
+import 'package:tahsel_dashboard/features/admin/data/services/admin_stats_service.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/audit/audit_cubit.dart';
@@ -16,18 +17,21 @@ import 'package:tahsel_dashboard/features/admin/presentation/cubit/user_detail/u
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/users/users_cubit.dart';
 
 void registerAdminDependencies() {
-  sl.registerLazySingleton<CloudFunctionsService>(
-    () => CloudFunctionsService(
-      FirebaseFunctions.instanceFor(region: CloudFunctionsService.region),
-      sl<FirebaseAuth>(),
-    ),
+  sl.registerLazySingleton<AdminAuthService>(() => AdminAuthService());
+  sl.registerLazySingleton<AdminAuditService>(
+    () => AdminAuditService(sl<FirebaseFirestore>()),
+  );
+  sl.registerLazySingleton<AdminStatsService>(
+    () => AdminStatsService(sl<FirebaseFirestore>()),
   );
 
   sl.registerLazySingleton<AdminRemoteDataSource>(
     () => AdminRemoteDataSourceImpl(
       firestore: sl<FirebaseFirestore>(),
       auth: sl<FirebaseAuth>(),
-      functions: sl<CloudFunctionsService>(),
+      authService: sl<AdminAuthService>(),
+      auditService: sl<AdminAuditService>(),
+      statsService: sl<AdminStatsService>(),
     ),
   );
 

@@ -1,6 +1,5 @@
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:tahsel_dashboard/core/error/failures.dart';
 import 'package:tahsel_dashboard/core/error/firebase_error_handler.dart';
 import 'package:tahsel_dashboard/core/models/paginated_result.dart';
@@ -25,8 +24,6 @@ class AdminRepositoryImpl implements AdminRepository {
       return Right(await action());
     } on FirebaseAuthException catch (e) {
       return Left(ServerFailure(FirebaseErrorHandler.getMessage(e)));
-    } on FirebaseFunctionsException catch (e) {
-      return Left(ServerFailure(e.message ?? e.code));
     } on FirebaseException catch (e) {
       return Left(ServerFailure(FirebaseErrorHandler.getMessage(e)));
     } catch (e) {
@@ -39,6 +36,9 @@ class AdminRepositoryImpl implements AdminRepository {
         email: data['email'] ?? '',
         name: data['name'] ?? '',
         role: data['role'] ?? 'support',
+        permissions: (data['permissions'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList(),
       );
 
   @override
@@ -138,113 +138,74 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Future<Either<Failure, Map<String, dynamic>>> createUser(
           Map<String, dynamic> data) =>
-      _guard(() => _remote.callFunction('adminCreateUser', data: data));
+      _guard(() => _remote.createUser(data));
 
   @override
-  Future<Either<Failure, void>> updateUser(Map<String, dynamic> data) => _guard(
-        () => _remote.callFunction('adminUpdateUser', data: data),
-      );
+  Future<Either<Failure, void>> updateUser(Map<String, dynamic> data) =>
+      _guard(() => _remote.updateUser(data));
 
   @override
-  Future<Either<Failure, void>> deleteUser(String uid) => _guard(
-        () => _remote.callFunction('adminDeleteUser', data: {'uid': uid}),
-      );
+  Future<Either<Failure, void>> deleteUser(String uid) =>
+      _guard(() => _remote.deleteUser(uid));
 
   @override
-  Future<Either<Failure, void>> suspendUser(String uid) => _guard(
-        () => _remote.callFunction('adminSuspendUser', data: {'uid': uid}),
-      );
+  Future<Either<Failure, void>> suspendUser(String uid) =>
+      _guard(() => _remote.suspendUser(uid));
 
   @override
-  Future<Either<Failure, void>> activateUser(String uid) => _guard(
-        () => _remote.callFunction('adminActivateUser', data: {'uid': uid}),
-      );
+  Future<Either<Failure, void>> activateUser(String uid) =>
+      _guard(() => _remote.activateUser(uid));
 
   @override
   Future<Either<Failure, void>> resetPassword(String uid, String newPassword) =>
-      _guard(() => _remote.callFunction('adminResetPassword', data: {
-            'uid': uid,
-            'newPassword': newPassword,
-          }));
+      _guard(() => _remote.sendPasswordResetEmail(uid));
 
   @override
-  Future<Either<Failure, void>> forceLogout(String uid) => _guard(
-        () => _remote.callFunction('adminForceLogout', data: {'uid': uid}),
-      );
+  Future<Either<Failure, void>> forceLogout(String uid) =>
+      _guard(() => _remote.forceLogout(uid));
 
   @override
   Future<Either<Failure, void>> renewSubscription(String uid, int days) =>
-      _guard(() => _remote.callFunction('adminRenewSubscription', data: {
-            'uid': uid,
-            'days': days,
-          }));
+      _guard(() => _remote.renewSubscription(uid, days));
 
   @override
   Future<Either<Failure, void>> extendSubscription(String uid, int days) =>
-      _guard(() => _remote.callFunction('adminExtendSubscription', data: {
-            'uid': uid,
-            'days': days,
-          }));
+      _guard(() => _remote.extendSubscription(uid, days));
 
   @override
   Future<Either<Failure, void>> shortenSubscription(String uid, int days) =>
-      _guard(() => _remote.callFunction('adminShortenSubscription', data: {
-            'uid': uid,
-            'days': days,
-          }));
+      _guard(() => _remote.shortenSubscription(uid, days));
 
   @override
-  Future<Either<Failure, void>> suspendSubscription(String uid) => _guard(
-        () => _remote.callFunction('adminSuspendSubscription', data: {'uid': uid}),
-      );
+  Future<Either<Failure, void>> suspendSubscription(String uid) =>
+      _guard(() => _remote.suspendSubscription(uid));
 
   @override
-  Future<Either<Failure, void>> reactivateSubscription(String uid) => _guard(
-        () =>
-            _remote.callFunction('adminReactivateSubscription', data: {'uid': uid}),
-      );
+  Future<Either<Failure, void>> reactivateSubscription(String uid) =>
+      _guard(() => _remote.reactivateSubscription(uid));
 
   @override
-  Future<Either<Failure, void>> createNote(String uid, String content) => _guard(
-        () => _remote.callFunction('adminCreateNote', data: {
-          'uid': uid,
-          'content': content,
-        }),
-      );
+  Future<Either<Failure, void>> createNote(String uid, String content) =>
+      _guard(() => _remote.createNote(uid, content));
 
   @override
   Future<Either<Failure, void>> updateNote(
           String uid, String noteId, String content) =>
-      _guard(() => _remote.callFunction('adminUpdateNote', data: {
-            'uid': uid,
-            'noteId': noteId,
-            'content': content,
-          }));
+      _guard(() => _remote.updateNote(uid, noteId, content));
 
   @override
-  Future<Either<Failure, void>> deleteNote(String uid, String noteId) => _guard(
-        () => _remote.callFunction('adminDeleteNote', data: {
-          'uid': uid,
-          'noteId': noteId,
-        }),
-      );
+  Future<Either<Failure, void>> deleteNote(String uid, String noteId) =>
+      _guard(() => _remote.deleteNote(uid, noteId));
 
   @override
   Future<Either<Failure, void>> sendNotification(Map<String, dynamic> data) =>
-      _guard(() => _remote.callFunction('adminSendNotification', data: data));
+      _guard(() => _remote.sendNotification(data));
 
   @override
   Future<Either<Failure, void>> updateAppSettings(AppSettings settings) =>
-      _guard(() => _remote.callFunction('adminUpdateAppSettings', data: {
-            'minSupportedVersion': settings.minSupportedVersion,
-            'latestVersion': settings.latestVersion,
-            'forceUpdate': settings.forceUpdate,
-          }));
+      _guard(() => _remote.updateAppSettings(settings));
 
   @override
   Future<Either<Failure, void>> setupInitialAdmin(String email, String name) =>
-      _guard(() => _remote.callFunction('adminSetupInitialAdmin', data: {
-            'email': email,
-            'name': name,
-          }));
+      _guard(() => _remote.setupInitialAdmin(email, name));
 }
