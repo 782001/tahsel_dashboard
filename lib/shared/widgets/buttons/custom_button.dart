@@ -56,8 +56,8 @@ class CustomButton extends StatelessWidget {
                   height: 20.h,
                   width: 20.w,
                   child: CircularProgressIndicator(
-                    color: textColor ?? AppColors.white,
                     strokeWidth: 2.w,
+                    color: textColor ?? AppColors.white,
                   ),
                 ),
                 SizedBox(width: 8.w),

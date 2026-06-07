@@ -35,13 +35,13 @@ class _AdminShellState extends State<AdminShell> {
   ];
 
   List<_NavItem> get _navItems => [
-        _NavItem('admin_nav_dashboard'.tr(), Icons.dashboard_outlined),
-        _NavItem('admin_nav_users'.tr(), Icons.people_outline),
-        _NavItem('admin_nav_expiration'.tr(), Icons.schedule),
-        _NavItem('admin_nav_audit'.tr(), Icons.history),
-        _NavItem('admin_nav_notifications'.tr(), Icons.campaign_outlined),
-        _NavItem('admin_nav_settings'.tr(), Icons.settings_outlined),
-      ];
+    _NavItem('admin_nav_dashboard'.tr(), Icons.dashboard_outlined),
+    _NavItem('admin_nav_users'.tr(), Icons.people_outline),
+    _NavItem('admin_nav_expiration'.tr(), Icons.schedule),
+    _NavItem('admin_nav_audit'.tr(), Icons.history),
+    _NavItem('admin_nav_notifications'.tr(), Icons.campaign_outlined),
+    _NavItem('admin_nav_settings'.tr(), Icons.settings_outlined),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +68,12 @@ class _AdminShellState extends State<AdminShell> {
               selectedIndex: _selectedIndex,
               onDestinationSelected: (i) => setState(() => _selectedIndex = i),
               destinations: _navItems
-                  .map((n) => NavigationDestination(
-                        icon: Icon(n.icon),
-                        label: n.label,
-                      ))
+                  .map(
+                    (n) => NavigationDestination(
+                      icon: Icon(n.icon),
+                      label: n.label,
+                    ),
+                  )
                   .toList(),
             ),
       drawer: isWide ? null : Drawer(child: _buildSidebar()),
@@ -98,15 +100,21 @@ class _AdminShellState extends State<AdminShell> {
                 final selected = _selectedIndex == index;
                 return ListTile(
                   selected: selected,
-                  selectedTileColor: AppColors.primaryColor.withValues(alpha: 0.1),
+                  selectedTileColor: AppColors.primaryColor.withValues(
+                    alpha: 0.1,
+                  ),
                   leading: Icon(
                     item.icon,
-                    color: selected ? AppColors.primaryColor : AppColors.subTitleColor,
+                    color: selected
+                        ? AppColors.primaryColor
+                        : AppColors.subTitleColor,
                   ),
                   title: TextWidget(
                     item.label,
                     style: TextStyles.font14Weight400RightAligned().copyWith(
-                      color: selected ? AppColors.primaryColor : AppColors.textColor,
+                      color: selected
+                          ? AppColors.primaryColor
+                          : AppColors.textColor,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),

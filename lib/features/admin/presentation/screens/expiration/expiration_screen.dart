@@ -46,7 +46,10 @@ class _ExpirationScreenState extends State<ExpirationScreen> {
                   selected: selected,
                   onSelected: (_) {
                     setState(() => _selectedDays = days);
-                    context.read<ExpirationCubit>().load(withinDays: days, refresh: true);
+                    context.read<ExpirationCubit>().load(
+                      withinDays: days,
+                      refresh: true,
+                    );
                   },
                 ),
               );
@@ -57,7 +60,12 @@ class _ExpirationScreenState extends State<ExpirationScreen> {
           child: BlocBuilder<ExpirationCubit, UsersState>(
             builder: (context, state) {
               if (state is UsersLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.w,
+                    color: AppColors.primaryColor,
+                  ),
+                );
               }
               if (state is UsersError) {
                 return Center(child: TextWidget(state.message));
@@ -80,10 +88,13 @@ class _ExpirationScreenState extends State<ExpirationScreen> {
                     separatorBuilder: (_, __) => SizedBox(height: 8.h),
                     itemBuilder: (context, index) {
                       if (index >= state.users.length) {
-                        return const Center(
+                        return Center(
                           child: Padding(
                             padding: EdgeInsets.all(16),
-                            child: CircularProgressIndicator(),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.w,
+                              color: AppColors.primaryColor,
+                            ),
                           ),
                         );
                       }
@@ -117,26 +128,35 @@ class _ExpirationTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextWidget(user.fullName, style: TextStyles.font16WeightBoldText()),
+                  TextWidget(
+                    user.fullName,
+                    style: TextStyles.font16WeightBoldText(),
+                  ),
                   TextWidget(user.email),
                   Row(
                     children: [
                       StatusBadge(statusKey: user.subscriptionStatus),
                       SizedBox(width: 8.w),
-                      TextWidget('${'admin_days_remaining'.tr()}: ${user.daysRemaining}'),
+                      TextWidget(
+                        '${'admin_days_remaining'.tr()}: ${user.daysRemaining}',
+                      ),
                     ],
+                  ),
+                  SizedBox(height: 8.h),
+                  CustomButton(
+                    text: 'admin_quick_renew'.tr(),
+                    width: 120.w,
+                    height: 40.h,
+                    onPressed: () async {
+                      final ok = await context
+                          .read<ExpirationCubit>()
+                          .quickRenew(user.uid);
+                      if (ok)
+                        showSuccessToast('admin_subscription_updated'.tr());
+                    },
                   ),
                 ],
               ),
-            ),
-            CustomButton(
-              text: 'admin_quick_renew'.tr(),
-              width: 120.w,
-              height: 40.h,
-              onPressed: () async {
-                final ok = await context.read<ExpirationCubit>().quickRenew(user.uid);
-                if (ok) showSuccessToast('admin_subscription_updated'.tr());
-              },
             ),
             IconButton(
               icon: const Icon(Icons.open_in_new),

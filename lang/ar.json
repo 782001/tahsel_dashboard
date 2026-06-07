@@ -91,6 +91,7 @@
   "admin_target": "الهدف",
   "copy_uid": "نسخ المعرف",
   "uid_copied": "تم نسخ المعرف",
+  "email_copied": "تم نسخ البريد الإلكتروني",
   "status_active": "نشط",
   "status_suspended": "موقوف",
   "status_deleted": "محذوف",

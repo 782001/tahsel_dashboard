@@ -68,7 +68,12 @@ class _UsersListScreenState extends State<UsersListScreen> {
           child: BlocBuilder<UsersCubit, UsersState>(
             builder: (context, state) {
               if (state is UsersLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.w,
+                    color: AppColors.primaryColor,
+                  ),
+                );
               }
               if (state is UsersError) {
                 return Center(child: TextWidget(state.message));
@@ -91,10 +96,15 @@ class _UsersListScreenState extends State<UsersListScreen> {
                     separatorBuilder: (_, __) => SizedBox(height: 8.h),
                     itemBuilder: (context, index) {
                       if (index >= state.users.length) {
-                        return const Center(child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: CircularProgressIndicator(),
-                        ));
+                        return Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.w,
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
+                        );
                       }
                       return _UserTile(user: state.users[index]);
                     },
@@ -129,11 +139,17 @@ class _UserTile extends StatelessWidget {
     return Card(
       color: AppColors.surface,
       child: ListTile(
-        title: TextWidget(user.fullName, style: TextStyles.font16WeightBoldText()),
+        title: TextWidget(
+          user.fullName,
+          style: TextStyles.font16WeightBoldText(),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextWidget(user.email, style: TextStyles.font14Weight400RightAligned()),
+            TextWidget(
+              user.email,
+              style: TextStyles.font14Weight400RightAligned(),
+            ),
             SizedBox(height: 4.h),
             Row(
               children: [

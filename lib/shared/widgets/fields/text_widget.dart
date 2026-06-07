@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel_dashboard/core/utils/app_colors.dart';
+import 'package:tahsel_dashboard/core/utils/styles.dart';
 
 class TextWidget extends StatelessWidget {
   const TextWidget(
@@ -23,7 +25,8 @@ class TextWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text ?? '',
-      style: style,
+      style:
+          style ?? TextStyles.customStyle(fontSize: 14, color: AppColors.black),
       textAlign: textAlign,
       textDirection: textDirection,
       maxLines: maxLines,

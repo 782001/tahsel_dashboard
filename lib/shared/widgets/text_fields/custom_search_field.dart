@@ -28,7 +28,7 @@ class CustomSearchField extends StatelessWidget {
         onChanged: onChanged,
         style: TextStyles.customStyle(
           color: AppColors.textColor,
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
         decoration: InputDecoration(
@@ -36,7 +36,7 @@ class CustomSearchField extends StatelessWidget {
 
           hintStyle: TextStyles.customStyle(
             color: AppColors.disabledColor,
-            fontSize: 14,
+            fontSize: 8,
             fontWeight: FontWeight.w500,
           ),
           prefixIcon: Icon(Icons.search, color: AppColors.disabledColor),

@@ -29,7 +29,12 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
     return BlocBuilder<AuditCubit, AuditState>(
       builder: (context, state) {
         if (state is AuditLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2.w,
+              color: AppColors.primaryColor,
+            ),
+          );
         }
         if (state is AuditError) {
           return Center(child: TextWidget(state.message));

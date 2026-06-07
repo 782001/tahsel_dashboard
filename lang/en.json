@@ -91,6 +91,7 @@
   "admin_target": "Target",
   "copy_uid": "Copy UID",
   "uid_copied": "UID copied to clipboard",
+  "email_copied": "Email copied to clipboard",
   "status_active": "Active",
   "status_suspended": "Suspended",
   "status_deleted": "Deleted",

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:tahsel_dashboard/core/constants/admin_constants.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
+import 'package:tahsel_dashboard/core/utils/app_logger.dart';
 import 'package:tahsel_dashboard/core/utils/styles.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/user_detail/user_detail_cubit.dart';
@@ -42,9 +43,17 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       body: BlocBuilder<UserDetailCubit, UserDetailState>(
         builder: (context, state) {
           if (state is UserDetailLoading || state is UserDetailActionLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2.w,
+                color: AppColors.primaryColor,
+              ),
+            );
           }
           if (state is UserDetailError) {
+            AppLogger.printMessage(
+              'Error loading user details: ${state.message}',
+            );
             return Center(child: TextWidget(state.message));
           }
           if (state is UserDetailLoaded) {
@@ -61,48 +70,90 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         Expanded(
                           child: TextWidget(
                             user.fullName,
-                            style: TextStyles.appbartext().copyWith(fontSize: 22.sp),
+                            style: TextStyles.appbartext().copyWith(
+                              fontSize: 22.sp,
+                            ),
                           ),
                         ),
                         StatusBadge(statusKey: user.accountStatus),
                       ],
                     ),
                     SizedBox(height: 8.h),
-                    _infoRow('UID', user.uid, trailing: CopyUidButton(uid: user.uid)),
-                    _infoRow('email_address'.tr(), user.email),
+                    _infoRow(
+                      'UID',
+                      user.uid,
+                      trailing: CopyButton(text: user.uid),
+                    ),
+                    _infoRow(
+                      'email_address'.tr(),
+                      user.email,
+                      trailing: CopyButton(
+                        text: user.email,
+                        tostText: 'email_copied',
+                      ),
+                    ),
                     _infoRow('customer_phone'.tr(), user.phoneNumber),
-                    _infoRow('admin_created'.tr(),
-                        user.createdAt != null ? df.format(user.createdAt!) : '-'),
-                    _infoRow('admin_last_login'.tr(),
-                        user.lastLogin != null ? df.format(user.lastLogin!) : '-'),
-                    _infoRow('admin_last_active'.tr(),
-                        user.lastActive != null ? df.format(user.lastActive!) : '-'),
+                    _infoRow(
+                      'admin_created'.tr(),
+                      user.createdAt != null ? df.format(user.createdAt!) : '-',
+                    ),
+                    _infoRow(
+                      'admin_last_login'.tr(),
+                      user.lastLogin != null ? df.format(user.lastLogin!) : '-',
+                    ),
+                    _infoRow(
+                      'admin_last_active'.tr(),
+                      user.lastActive != null
+                          ? df.format(user.lastActive!)
+                          : '-',
+                    ),
                     if (user.devicePlatform != null)
-                      _infoRow('admin_device_platform'.tr(), user.devicePlatform!),
+                      _infoRow(
+                        'admin_device_platform'.tr(),
+                        user.devicePlatform!,
+                      ),
                   ]),
                   _section('admin_subscription'.tr(), [
                     Row(
                       children: [
                         StatusBadge(statusKey: user.subscriptionStatus),
                         SizedBox(width: 8.w),
-                        TextWidget('${'admin_days_remaining'.tr()}: ${user.daysRemaining}'),
+                        TextWidget(
+                          '${'admin_days_remaining'.tr()}: ${user.daysRemaining}',
+                        ),
                       ],
                     ),
-                    _infoRow('admin_sub_start'.tr(),
-                        user.subscriptionStart != null ? df.format(user.subscriptionStart!) : '-'),
-                    _infoRow('admin_sub_end'.tr(),
-                        user.subscriptionEnd != null ? df.format(user.subscriptionEnd!) : '-'),
+                    _infoRow(
+                      'admin_sub_start'.tr(),
+                      user.subscriptionStart != null
+                          ? df.format(user.subscriptionStart!)
+                          : '-',
+                    ),
+                    _infoRow(
+                      'admin_sub_end'.tr(),
+                      user.subscriptionEnd != null
+                          ? df.format(user.subscriptionEnd!)
+                          : '-',
+                    ),
                     Wrap(
                       spacing: 8.w,
                       runSpacing: 8.h,
                       children: [
                         for (final days in AdminConstants.subscriptionPresets)
                           OutlinedButton(
-                            onPressed: () => _subscription(context, SubscriptionAction.renew, days),
-                            child: Text('${'admin_renew'.tr()} $days'),
+                            onPressed: () => _subscription(
+                              context,
+                              SubscriptionAction.renew,
+                              days,
+                            ),
+                            child: TextWidget('${'admin_renew'.tr()} $days'),
                           ),
                         OutlinedButton(
-                          onPressed: () => _subscription(context, SubscriptionAction.extend, 30),
+                          onPressed: () => _subscription(
+                            context,
+                            SubscriptionAction.extend,
+                            30,
+                          ),
                           child: TextWidget('admin_extend'.tr()),
                         ),
                         OutlinedButton(
@@ -110,11 +161,19 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           child: TextWidget('admin_shorten'.tr()),
                         ),
                         OutlinedButton(
-                          onPressed: () => _subscription(context, SubscriptionAction.suspend, 0),
+                          onPressed: () => _subscription(
+                            context,
+                            SubscriptionAction.suspend,
+                            0,
+                          ),
                           child: TextWidget('admin_suspend_sub'.tr()),
                         ),
                         OutlinedButton(
-                          onPressed: () => _subscription(context, SubscriptionAction.reactivate, 0),
+                          onPressed: () => _subscription(
+                            context,
+                            SubscriptionAction.reactivate,
+                            0,
+                          ),
                           child: TextWidget('admin_reactivate_sub'.tr()),
                         ),
                         OutlinedButton(
@@ -124,22 +183,28 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       ],
                     ),
                   ]),
-                  _section('admin_usage_stats'.tr(), [
-                    _statsGrid(user),
-                  ]),
+                  _section('admin_usage_stats'.tr(), [_statsGrid(user)]),
                   _section('admin_sessions'.tr(), [
                     if (state.sessions.isEmpty)
                       TextWidget('no_data'.tr())
                     else
-                      ...state.sessions.map((s) => ListTile(
-                            title: TextWidget(s.platform),
-                            subtitle: TextWidget(s.lastActive != null
+                      ...state.sessions.map(
+                        (s) => ListTile(
+                          title: TextWidget(s.platform),
+                          subtitle: TextWidget(
+                            s.lastActive != null
                                 ? df.format(s.lastActive!)
-                                : '-'),
-                            trailing: s.active
-                                ? Icon(Icons.circle, color: AppColors.success, size: 10.sp)
-                                : null,
-                          )),
+                                : '-',
+                          ),
+                          trailing: s.active
+                              ? Icon(
+                                  Icons.circle,
+                                  color: AppColors.success,
+                                  size: 10.sp,
+                                )
+                              : null,
+                        ),
+                      ),
                     CustomButton(
                       text: 'admin_force_logout'.tr(),
                       width: 200.w,
@@ -147,32 +212,38 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         final cubit = context.read<UserDetailCubit>();
                         final ok = await cubit.forceLogout();
                         if (!mounted) return;
-                        if (ok) showSuccessToast('admin_force_logout_success'.tr());
+                        if (ok)
+                          showSuccessToast('admin_force_logout_success'.tr());
                       },
                     ),
                   ]),
                   _section('admin_notes'.tr(), [
-                    ...state.notes.map((n) => Card(
-                          child: ListTile(
-                            title: TextWidget(n.content),
-                            subtitle: TextWidget(
-                                '${n.adminName} • ${n.createdAt != null ? df.format(n.createdAt!) : ''}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined),
-                                  onPressed: () => _editNote(context, n.id, n.content),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () =>
-                                      context.read<UserDetailCubit>().deleteNote(n.id),
-                                ),
-                              ],
-                            ),
+                    ...state.notes.map(
+                      (n) => Card(
+                        child: ListTile(
+                          title: TextWidget(n.content),
+                          subtitle: TextWidget(
+                            '${n.adminName} • ${n.createdAt != null ? df.format(n.createdAt!) : ''}',
                           ),
-                        )),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: () =>
+                                    _editNote(context, n.id, n.content),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () => context
+                                    .read<UserDetailCubit>()
+                                    .deleteNote(n.id),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                     TextButton.icon(
                       onPressed: () => _addNote(context),
                       icon: const Icon(Icons.add),
@@ -203,7 +274,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               context,
                               'admin_suspend_user'.tr(),
                               'admin_confirm_suspend'.tr(),
-                              () => context.read<UserDetailCubit>().suspendUser(),
+                              () =>
+                                  context.read<UserDetailCubit>().suspendUser(),
                               successKey: 'admin_user_suspended',
                             ),
                           ),
@@ -216,7 +288,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               context,
                               'admin_activate_user'.tr(),
                               'admin_confirm_activate'.tr(),
-                              () => context.read<UserDetailCubit>().activateUser(),
+                              () => context
+                                  .read<UserDetailCubit>()
+                                  .activateUser(),
                               successKey: 'admin_user_activated',
                             ),
                           ),
@@ -272,11 +346,19 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         children: [
           SizedBox(
             width: 120.w,
-            child: TextWidget(label, style: TextStyles.font14Weight400RightAligned().copyWith(
-              color: AppColors.subTitleColor,
-            )),
+            child: TextWidget(
+              label,
+              style: TextStyles.font14Weight400RightAligned().copyWith(
+                color: AppColors.subTitleColor,
+              ),
+            ),
           ),
-          Expanded(child: TextWidget(value, style: TextStyles.font14Weight400RightAligned())),
+          Expanded(
+            child: TextWidget(
+              value,
+              style: TextStyles.font14Weight400RightAligned(),
+            ),
+          ),
           if (trailing != null) trailing,
         ],
       ),
@@ -295,15 +377,23 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       spacing: 12.w,
       runSpacing: 12.h,
       children: stats
-          .map((s) => SizedBox(
-                width: 140.w,
-                child: Column(
-                  children: [
-                    TextWidget('${s.$2}', style: TextStyles.font18Weight500Action()),
-                    TextWidget(s.$1, style: TextStyles.font14Weight400RightAligned()),
-                  ],
-                ),
-              ))
+          .map(
+            (s) => SizedBox(
+              width: 140.w,
+              child: Column(
+                children: [
+                  TextWidget(
+                    '${s.$2}',
+                    style: TextStyles.font18Weight500Action(),
+                  ),
+                  TextWidget(
+                    s.$1,
+                    style: TextStyles.font14Weight400RightAligned(),
+                  ),
+                ],
+              ),
+            ),
+          )
           .toList(),
     );
   }
@@ -341,7 +431,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         title: TextWidget('admin_add_note'.tr()),
         content: TextField(controller: controller, maxLines: 3),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: TextWidget('cancel'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: TextWidget('cancel'.tr()),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, controller.text),
             child: TextWidget('confirm'.tr()),
@@ -355,7 +448,11 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     }
   }
 
-  Future<void> _editNote(BuildContext context, String noteId, String current) async {
+  Future<void> _editNote(
+    BuildContext context,
+    String noteId,
+    String current,
+  ) async {
     final controller = TextEditingController(text: current);
     final result = await showDialog<String>(
       context: context,
@@ -363,7 +460,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         title: TextWidget('admin_edit_note'.tr()),
         content: TextField(controller: controller, maxLines: 3),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: TextWidget('cancel'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: TextWidget('cancel'.tr()),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, controller.text),
             child: TextWidget('confirm'.tr()),
@@ -403,19 +503,27 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: TextWidget('cancel'.tr())),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: TextWidget('confirm'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: TextWidget('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: TextWidget('confirm'.tr()),
+          ),
         ],
       ),
     );
     if (result == true && mounted) {
       final cubit = context.read<UserDetailCubit>();
-      final ok = await cubit.updateUser(UpdateUserParams(
-        uid: widget.uid,
-        fullName: nameController.text.trim(),
-        email: emailController.text.trim(),
-        phoneNumber: phoneController.text.trim(),
-      ));
+      final ok = await cubit.updateUser(
+        UpdateUserParams(
+          uid: widget.uid,
+          fullName: nameController.text.trim(),
+          email: emailController.text.trim(),
+          phoneNumber: phoneController.text.trim(),
+        ),
+      );
       nameController.dispose();
       emailController.dispose();
       phoneController.dispose();
@@ -434,8 +542,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         title: TextWidget('admin_reset_password'.tr()),
         content: TextWidget('admin_reset_password_email_hint'.tr()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: TextWidget('cancel'.tr())),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: TextWidget('confirm'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: TextWidget('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: TextWidget('confirm'.tr()),
+          ),
         ],
       ),
     );
@@ -458,8 +572,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         title: TextWidget(title),
         content: TextWidget(message),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: TextWidget('cancel'.tr())),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: TextWidget('confirm'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: TextWidget('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: TextWidget('confirm'.tr()),
+          ),
         ],
       ),
     );
@@ -476,8 +596,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         title: TextWidget('admin_delete_user'.tr()),
         content: TextWidget('admin_confirm_delete'.tr()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: TextWidget('cancel'.tr())),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: TextWidget('confirm'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: TextWidget('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: TextWidget('confirm'.tr()),
+          ),
         ],
       ),
     );

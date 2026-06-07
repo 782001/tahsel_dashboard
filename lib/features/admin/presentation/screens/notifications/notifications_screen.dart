@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
+import 'package:tahsel_dashboard/core/utils/app_colors.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/notifications/notifications_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/notifications/notifications_state.dart';
 import 'package:tahsel_dashboard/shared/widgets/buttons/custom_button.dart';
@@ -105,7 +106,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: BlocBuilder<NotificationsCubit, NotificationsState>(
             builder: (context, state) {
               if (state is NotificationsLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.w,
+                    color: AppColors.primaryColor,
+                  ),
+                );
               }
               if (state is NotificationsLoaded) {
                 final df = DateFormat.yMMMd();
