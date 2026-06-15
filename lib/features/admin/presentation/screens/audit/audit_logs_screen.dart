@@ -24,10 +24,13 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
     context.read<AuditCubit>().load();
   }
 
+  Future<void> _onRefresh() => context.read<AuditCubit>().load();
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuditCubit, AuditState>(
       builder: (context, state) {
+        // ── Full-screen loading (first load) ──────────────────────────────
         if (state is AuditLoading) {
           return Center(
             child: CircularProgressIndicator(
@@ -36,31 +39,85 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
             ),
           );
         }
+
+        // ── Error state — scrollable so RefreshIndicator works ────────────
         if (state is AuditError) {
-          return Center(child: TextWidget(state.message));
-        }
-        if (state is AuditLoaded) {
-          final df = DateFormat.yMMMd().add_Hm();
-          return NotificationListener<ScrollNotification>(
-            onNotification: (n) {
-              if (n is ScrollEndNotification &&
-                  n.metrics.pixels >= n.metrics.maxScrollExtent - 100) {
-                context.read<AuditCubit>().loadMore();
-              }
-              return false;
-            },
-            child: ListView.separated(
-              padding: EdgeInsets.all(16.w),
-              itemCount: state.logs.length,
-              separatorBuilder: (_, __) =>
-                  Divider(color: AppColors.dividerColor),
-              itemBuilder: (context, index) {
-                final log = state.logs[index];
-                return _AuditTile(log: log, dateFormat: df);
-              },
+          return RefreshIndicator(
+            color: AppColors.primaryColor,
+            onRefresh: _onRefresh,
+            child: ListView(
+              children: [
+                SizedBox(height: 120.h),
+                Center(child: TextWidget(state.message)),
+                SizedBox(height: 16.h),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _onRefresh,
+                    icon: const Icon(Icons.refresh),
+                    label: TextWidget('retry'.tr()),
+                  ),
+                ),
+              ],
             ),
           );
         }
+
+        // ── Loaded state ──────────────────────────────────────────────────
+        if (state is AuditLoaded) {
+          if (state.logs.isEmpty) {
+            return RefreshIndicator(
+              color: AppColors.primaryColor,
+              onRefresh: _onRefresh,
+              child: ListView(
+                children: [
+                  SizedBox(height: 120.h),
+                  Center(child: TextWidget('sorry_no_data'.tr())),
+                ],
+              ),
+            );
+          }
+
+          final df = DateFormat.yMMMd().add_Hm();
+          // total items = logs + optional load-more spinner
+          final itemCount = state.logs.length + (state.hasMore ? 1 : 0);
+
+          return RefreshIndicator(
+            color: AppColors.primaryColor,
+            onRefresh: _onRefresh,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (n) {
+                if (n is ScrollEndNotification &&
+                    n.metrics.pixels >= n.metrics.maxScrollExtent - 100 &&
+                    !state.isLoadingMore) {
+                  context.read<AuditCubit>().loadMore();
+                }
+                return false;
+              },
+              child: ListView.separated(
+                padding: EdgeInsets.all(16.w),
+                itemCount: itemCount,
+                separatorBuilder: (_, __) =>
+                    Divider(color: AppColors.dividerColor),
+                itemBuilder: (context, index) {
+                  // Load-more spinner at the bottom
+                  if (index >= state.logs.length) {
+                    return Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.w,
+                          color: AppColors.primaryColor,
+                        ),
+                      ),
+                    );
+                  }
+                  return _AuditTile(log: state.logs[index], dateFormat: df);
+                },
+              ),
+            ),
+          );
+        }
+
         return const SizedBox.shrink();
       },
     );
@@ -85,6 +142,8 @@ class _AuditTile extends StatelessWidget {
           TextWidget('${log.adminName} (${log.adminId})'),
           if (log.targetUserName != null)
             TextWidget('${'admin_target'.tr()}: ${log.targetUserName}'),
+          if (log.metadata.containsKey('days') && log.metadata['days'] != null)
+            TextWidget('${'days'.tr()}: ${log.metadata['days']}'),
           TextWidget(
             log.timestamp != null ? dateFormat.format(log.timestamp!) : '',
             style: TextStyles.font14Weight400RightAligned().copyWith(
