@@ -112,5 +112,8 @@
   "customer_phone": "Phone Number",
   "language": "Language",
   "arabic": "Arabic",
-  "english": "English"
+  "english": "English",
+  "admin_user_type": "Account Type",
+  "user_type_cafe": "PlayStation / Cafe",
+  "user_type_shop": "Shop"
 }

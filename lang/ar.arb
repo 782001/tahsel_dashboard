@@ -12,5 +12,8 @@
   "status_deleted": "محذوف",
   "status_expired": "منتهي الاشتراك",
   "status_grace_period_expired": "انتهت فترة السماح",
-  "login_not_allowed": "لا يمكن تسجيل الدخول"
+  "login_not_allowed": "لا يمكن تسجيل الدخول",
+  "admin_user_type": "نوع الحساب",
+  "user_type_cafe": "بلايستيشن / كافيه",
+  "user_type_shop": "محل"
 }

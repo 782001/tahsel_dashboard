@@ -112,5 +112,8 @@
   "customer_phone": "رقم الهاتف",
   "language": "اللغة",
   "arabic": "العربية",
-  "english": "الإنجليزية"
+  "english": "الإنجليزية",
+  "admin_user_type": "نوع الحساب",
+  "user_type_cafe": "بلايستيشن / كافيه",
+  "user_type_shop": "محل"
 }

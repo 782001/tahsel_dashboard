@@ -98,6 +98,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     ),
                     _infoRow('customer_phone'.tr(), user.phoneNumber),
                     _infoRow(
+                      'admin_user_type'.tr(),
+                      user.userType == 'shop'
+                          ? 'user_type_shop'.tr()
+                          : 'user_type_cafe'.tr(),
+                    ),
+                    _infoRow(
                       'admin_created'.tr(),
                       user.createdAt != null ? df.format(user.createdAt!) : '-',
                     ),
@@ -520,37 +526,56 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     final nameController = TextEditingController(text: user.fullName);
     final emailController = TextEditingController(text: user.email);
     final phoneController = TextEditingController(text: user.phoneNumber);
+    String selectedUserType = user.userType;
     final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: TextWidget('admin_edit_user'.tr()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: 'admin_full_name'.tr()),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: TextWidget('admin_edit_user'.tr()),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: 'admin_full_name'.tr()),
+              ),
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(labelText: 'email_address'.tr()),
+              ),
+              TextField(
+                controller: phoneController,
+                decoration: InputDecoration(labelText: 'customer_phone'.tr()),
+              ),
+              SizedBox(height: 12.h),
+              DropdownButtonFormField<String>(
+                value: selectedUserType,
+                decoration: InputDecoration(labelText: 'admin_user_type'.tr()),
+                items: [
+                  DropdownMenuItem(
+                    value: 'cafe',
+                    child: TextWidget('user_type_cafe'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'shop',
+                    child: TextWidget('user_type_shop'.tr()),
+                  ),
+                ],
+                onChanged: (v) => setState(() => selectedUserType = v ?? 'cafe'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: TextWidget('cancel'.tr()),
             ),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: 'email_address'.tr()),
-            ),
-            TextField(
-              controller: phoneController,
-              decoration: InputDecoration(labelText: 'customer_phone'.tr()),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: TextWidget('confirm'.tr()),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: TextWidget('cancel'.tr()),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: TextWidget('confirm'.tr()),
-          ),
-        ],
       ),
     );
     if (result == true && mounted) {
@@ -561,6 +586,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           fullName: nameController.text.trim(),
           email: emailController.text.trim(),
           phoneNumber: phoneController.text.trim(),
+          userType: selectedUserType,
         ),
       );
       nameController.dispose();

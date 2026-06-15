@@ -150,6 +150,7 @@ class CreateUserParams {
   final String fullName;
   final String? phoneNumber;
   final int subscriptionDays;
+  final String userType;
 
   CreateUserParams({
     required this.email,
@@ -157,6 +158,7 @@ class CreateUserParams {
     required this.fullName,
     this.phoneNumber,
     this.subscriptionDays = 30,
+    this.userType = 'cafe',
   });
 
   Map<String, dynamic> toMap() => {
@@ -165,6 +167,7 @@ class CreateUserParams {
         'fullName': fullName,
         if (phoneNumber != null) 'phoneNumber': phoneNumber,
         'subscriptionDays': subscriptionDays,
+        'userType': userType,
       };
 }
 
@@ -181,12 +184,14 @@ class UpdateUserParams {
   final String? fullName;
   final String? email;
   final String? phoneNumber;
+  final String? userType;
 
   UpdateUserParams({
     required this.uid,
     this.fullName,
     this.email,
     this.phoneNumber,
+    this.userType,
   });
 
   Map<String, dynamic> toMap() => {
@@ -194,6 +199,7 @@ class UpdateUserParams {
         if (fullName != null) 'fullName': fullName,
         if (email != null) 'email': email,
         if (phoneNumber != null) 'phoneNumber': phoneNumber,
+        if (userType != null) 'userType': userType,
       };
 }
 

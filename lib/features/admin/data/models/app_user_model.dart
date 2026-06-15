@@ -17,6 +17,7 @@ class AppUserModel extends AppUser {
     super.devicePlatform,
     super.stats,
     super.subscriptionSuspended,
+    super.userType,
   });
 
   factory AppUserModel.fromFirestore(DocumentSnapshot doc) {
@@ -36,6 +37,7 @@ class AppUserModel extends AppUser {
       subscriptionEnd: _toDate(data['subscriptionEnd']),
       devicePlatform: data['devicePlatform'],
       subscriptionSuspended: data['subscriptionSuspended'] ?? false,
+      userType: data['userType'] ?? 'cafe',
       stats: UserStats(
         customers: statsMap['customers'] ?? 0,
         debts: statsMap['debts'] ?? 0,

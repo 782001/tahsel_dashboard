@@ -24,6 +24,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
   final _phone = TextEditingController();
   final _password = TextEditingController();
   int _days = 30;
+  String _userType = 'cafe';
   bool _loading = false;
 
   @override
@@ -67,6 +68,22 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                 obscureText: true,
               ),
               SizedBox(height: 12.h),
+              DropdownButtonFormField<String>(
+                value: _userType,
+                decoration: InputDecoration(labelText: 'admin_user_type'.tr()),
+                items: [
+                  DropdownMenuItem(
+                    value: 'cafe',
+                    child: TextWidget('user_type_cafe'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'shop',
+                    child: TextWidget('user_type_shop'.tr()),
+                  ),
+                ],
+                onChanged: (v) => setState(() => _userType = v ?? 'cafe'),
+              ),
+              SizedBox(height: 12.h),
               DropdownButtonFormField<int>(
                 value: _days,
                 decoration: InputDecoration(labelText: 'admin_subscription_days'.tr()),
@@ -106,6 +123,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                     fullName: _name.text.trim(),
                     phoneNumber: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
                     subscriptionDays: days,
+                    userType: _userType,
                   ),
                 );
             setState(() => _loading = false);

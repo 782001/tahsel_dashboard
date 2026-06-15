@@ -12,5 +12,8 @@
   "status_deleted": "Deleted",
   "status_expired": "Subscription Expired",
   "status_grace_period_expired": "Grace Period Expired",
-  "login_not_allowed": "Login Not Allowed"
+  "login_not_allowed": "Login Not Allowed",
+  "admin_user_type": "Account Type",
+  "user_type_cafe": "PlayStation / Cafe",
+  "user_type_shop": "Shop"
 }
