@@ -17,11 +17,16 @@ class AuditLoaded extends AuditState {
   final String? cursor;
   final bool isLoadingMore;
 
+  /// Non-null when a `loadMore` call fails. The existing [logs] are preserved
+  /// so the user does not lose their scroll position.
+  final String? loadMoreError;
+
   const AuditLoaded({
     required this.logs,
     required this.hasMore,
     this.cursor,
     this.isLoadingMore = false,
+    this.loadMoreError,
   });
 
   AuditLoaded copyWith({
@@ -29,17 +34,24 @@ class AuditLoaded extends AuditState {
     bool? hasMore,
     String? cursor,
     bool? isLoadingMore,
+    // Pass null explicitly to clear the error after it has been consumed.
+    Object? loadMoreError = _sentinel,
   }) =>
       AuditLoaded(
         logs: logs ?? this.logs,
         hasMore: hasMore ?? this.hasMore,
         cursor: cursor ?? this.cursor,
         isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+        loadMoreError:
+            loadMoreError == _sentinel ? this.loadMoreError : loadMoreError as String?,
       );
 
   @override
-  List<Object?> get props => [logs, hasMore, cursor, isLoadingMore];
+  List<Object?> get props => [logs, hasMore, cursor, isLoadingMore, loadMoreError];
 }
+
+// Sentinel used so `copyWith` can distinguish "not passed" from explicit null.
+const Object _sentinel = Object();
 
 class AuditError extends AuditState {
   final String message;

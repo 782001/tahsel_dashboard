@@ -158,7 +158,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         for (final days in AdminConstants.subscriptionPresets)
                           OutlinedButton(
                             onPressed: () => _subscription(
-                              context,
                               SubscriptionAction.renew,
                               days,
                             ),
@@ -166,19 +165,17 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           ),
                         OutlinedButton(
                           onPressed: () => _subscription(
-                            context,
                             SubscriptionAction.extend,
                             30,
                           ),
                           child: TextWidget('admin_extend'.tr()),
                         ),
                         OutlinedButton(
-                          onPressed: () => _shortenSubscription(context),
+                          onPressed: () => _shortenSubscription(),
                           child: TextWidget('admin_shorten'.tr()),
                         ),
                         OutlinedButton(
                           onPressed: () => _subscription(
-                            context,
                             SubscriptionAction.suspend,
                             0,
                           ),
@@ -186,14 +183,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         ),
                         OutlinedButton(
                           onPressed: () => _subscription(
-                            context,
                             SubscriptionAction.reactivate,
                             0,
                           ),
                           child: TextWidget('admin_reactivate_sub'.tr()),
                         ),
                         OutlinedButton(
-                          onPressed: () => _customSubscription(context),
+                          onPressed: () => _customSubscription(),
                           child: TextWidget('admin_custom_duration'.tr()),
                         ),
                       ],
@@ -217,7 +213,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                   Icons.circle,
                                   color: AppColors.success,
                                   size: 10.sp,
-                                )
+                               )
                               : null,
                         ),
                       ),
@@ -228,8 +224,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         final cubit = context.read<UserDetailCubit>();
                         final ok = await cubit.forceLogout();
                         if (!mounted) return;
-                        if (ok)
+                        if (ok) {
                           showSuccessToast('admin_force_logout_success'.tr());
+                        }
                       },
                     ),
                   ]),
@@ -247,7 +244,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               IconButton(
                                 icon: const Icon(Icons.edit_outlined),
                                 onPressed: () =>
-                                    _editNote(context, n.id, n.content),
+                                    _editNote(n.id, n.content),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline),
@@ -261,7 +258,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       ),
                     ),
                     TextButton.icon(
-                      onPressed: () => _addNote(context),
+                      onPressed: () => _addNote(),
                       icon: const Icon(Icons.add),
                       label: TextWidget('admin_add_note'.tr()),
                     ),
@@ -274,12 +271,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         CustomButton(
                           text: 'admin_edit_user'.tr(),
                           width: 160.w,
-                          onPressed: () => _editUser(context, user),
+                          onPressed: () => _editUser(user),
                         ),
                         CustomButton(
                           text: 'admin_reset_password'.tr(),
                           width: 180.w,
-                          onPressed: () => _resetPassword(context),
+                          onPressed: () => _resetPassword(),
                         ),
                         if (user.isActive)
                           CustomButton(
@@ -287,7 +284,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             width: 180.w,
                             color: AppColors.warning,
                             onPressed: () => _confirmAction(
-                              context,
                               'admin_suspend_user'.tr(),
                               'admin_confirm_suspend'.tr(),
                               () =>
@@ -301,7 +297,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             width: 180.w,
                             color: AppColors.success,
                             onPressed: () => _confirmAction(
-                              context,
                               'admin_activate_user'.tr(),
                               'admin_confirm_activate'.tr(),
                               () => context
@@ -316,7 +311,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             width: 180.w,
                             color: AppColors.error,
                             onPressed: () => _confirmAction(
-                              context,
                               'admin_disable_user'.tr(),
                               'admin_confirm_disable'.tr(),
                               () =>
@@ -330,7 +324,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             width: 180.w,
                             color: AppColors.success,
                             onPressed: () => _confirmAction(
-                              context,
                               'admin_activate_user'.tr(),
                               'admin_confirm_activate'.tr(),
                               () => context
@@ -344,7 +337,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             text: 'admin_delete_user'.tr(),
                             width: 180.w,
                             color: AppColors.error,
-                            onPressed: () => _confirmDelete(context),
+                            onPressed: () => _confirmDelete(),
                           ),
                       ],
                     ),
@@ -444,7 +437,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   Future<void> _subscription(
-    BuildContext context,
     SubscriptionAction action,
     int days,
   ) async {
@@ -453,22 +445,24 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       SubscriptionParams(uid: widget.uid, action: action, days: days),
     );
     if (!mounted) return;
-    if (ok) showSuccessToast('admin_subscription_updated'.tr());
+    if (ok) {
+      showSuccessToast('admin_subscription_updated'.tr());
+    }
   }
 
-  Future<void> _shortenSubscription(BuildContext context) async {
+  Future<void> _shortenSubscription() async {
     final days = await showCustomDaysDialog(context, titleKey: 'admin_shorten');
     if (days == null || !mounted) return;
-    await _subscription(context, SubscriptionAction.shorten, days);
+    await _subscription(SubscriptionAction.shorten, days);
   }
 
-  Future<void> _customSubscription(BuildContext context) async {
+  Future<void> _customSubscription() async {
     final days = await showCustomDaysDialog(context);
     if (days == null || !mounted) return;
-    await _subscription(context, SubscriptionAction.renew, days);
+    await _subscription(SubscriptionAction.renew, days);
   }
 
-  Future<void> _addNote(BuildContext context) async {
+  Future<void> _addNote() async {
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
@@ -494,7 +488,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   Future<void> _editNote(
-    BuildContext context,
     String noteId,
     String current,
   ) async {
@@ -522,7 +515,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     }
   }
 
-  Future<void> _editUser(BuildContext context, dynamic user) async {
+  Future<void> _editUser(dynamic user) async {
     final nameController = TextEditingController(text: user.fullName);
     final emailController = TextEditingController(text: user.email);
     final phoneController = TextEditingController(text: user.phoneNumber);
@@ -549,7 +542,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               ),
               SizedBox(height: 12.h),
               DropdownButtonFormField<String>(
-                value: selectedUserType,
+                initialValue: selectedUserType,
                 decoration: InputDecoration(labelText: 'admin_user_type'.tr()),
                 items: [
                   DropdownMenuItem(
@@ -592,7 +585,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       nameController.dispose();
       emailController.dispose();
       phoneController.dispose();
-      if (ok) showSuccessToast('admin_user_updated'.tr());
+      if (ok && mounted) {
+        showSuccessToast('admin_user_updated'.tr());
+      }
     } else {
       nameController.dispose();
       emailController.dispose();
@@ -600,7 +595,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     }
   }
 
-  Future<void> _resetPassword(BuildContext context) async {
+  Future<void> _resetPassword() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -620,12 +615,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
     if (confirmed == true && mounted) {
       final ok = await context.read<UserDetailCubit>().resetPassword('');
-      if (ok) showSuccessToast('admin_reset_email_sent'.tr());
+      if (ok && mounted) {
+        showSuccessToast('admin_reset_email_sent'.tr());
+      }
     }
   }
 
   Future<void> _confirmAction(
-    BuildContext context,
     String title,
     String message,
     Future<bool> Function() action, {
@@ -650,11 +646,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
     if (confirmed == true && mounted) {
       final ok = await action();
-      if (ok) showSuccessToast(successKey.tr());
+      if (ok && mounted) {
+        showSuccessToast(successKey.tr());
+      }
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context) async {
+  Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

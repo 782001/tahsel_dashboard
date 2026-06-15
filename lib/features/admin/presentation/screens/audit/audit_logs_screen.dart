@@ -9,6 +9,7 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/audit_log.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/audit/audit_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/audit/audit_state.dart';
 import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
+import 'package:tahsel_dashboard/shared/widgets/toast/custom_toast.dart';
 
 class AuditLogsScreen extends StatefulWidget {
   const AuditLogsScreen({super.key});
@@ -28,7 +29,18 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuditCubit, AuditState>(
+    return BlocConsumer<AuditCubit, AuditState>(
+      // ── Only listen when a background loadMore fails ───────────────────
+      listenWhen: (_, next) =>
+          next is AuditLoaded && next.loadMoreError != null,
+      listener: (context, state) {
+        if (state is AuditLoaded && state.loadMoreError != null) {
+          // Show toast without destroying the loaded list.
+          showfailureToast(state.loadMoreError!);
+          // Clear the error via the cubit so it won't fire again on the next rebuild.
+          context.read<AuditCubit>().clearLoadMoreError();
+        }
+      },
       builder: (context, state) {
         // ── Full-screen loading (first load) ──────────────────────────────
         if (state is AuditLoading) {
