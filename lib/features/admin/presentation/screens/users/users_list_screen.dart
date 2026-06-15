@@ -75,39 +75,65 @@ class _UsersListScreenState extends State<UsersListScreen> {
                   ),
                 );
               }
+
+              Future<void> onRefresh() =>
+                  context.read<UsersCubit>().load();
+
               if (state is UsersError) {
-                return Center(child: TextWidget(state.message));
+                return RefreshIndicator(
+                  color: AppColors.primaryColor,
+                  onRefresh: onRefresh,
+                  child: ListView(
+                    children: [
+                      SizedBox(height: 100.h),
+                      Center(child: TextWidget(state.message)),
+                    ],
+                  ),
+                );
               }
               if (state is UsersLoaded) {
                 if (state.users.isEmpty) {
-                  return Center(child: TextWidget('sorry_no_data'.tr()));
+                  return RefreshIndicator(
+                    color: AppColors.primaryColor,
+                    onRefresh: onRefresh,
+                    child: ListView(
+                      children: [
+                        SizedBox(height: 100.h),
+                        Center(child: TextWidget('sorry_no_data'.tr())),
+                      ],
+                    ),
+                  );
                 }
-                return NotificationListener<ScrollNotification>(
-                  onNotification: (n) {
-                    if (n is ScrollEndNotification &&
-                        n.metrics.pixels >= n.metrics.maxScrollExtent - 100) {
-                      context.read<UsersCubit>().loadMore();
-                    }
-                    return false;
-                  },
-                  child: ListView.separated(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    itemCount: state.users.length + (state.hasMore ? 1 : 0),
-                    separatorBuilder: (_, __) => SizedBox(height: 8.h),
-                    itemBuilder: (context, index) {
-                      if (index >= state.users.length) {
-                        return Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.w,
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                        );
+                return RefreshIndicator(
+                  color: AppColors.primaryColor,
+                  onRefresh: onRefresh,
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (n) {
+                      if (n is ScrollEndNotification &&
+                          n.metrics.pixels >= n.metrics.maxScrollExtent - 100) {
+                        context.read<UsersCubit>().loadMore();
                       }
-                      return _UserTile(user: state.users[index]);
+                      return false;
                     },
+                    child: ListView.separated(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      itemCount: state.users.length + (state.hasMore ? 1 : 0),
+                      separatorBuilder: (_, __) => SizedBox(height: 8.h),
+                      itemBuilder: (context, index) {
+                        if (index >= state.users.length) {
+                          return Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.w,
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
+                          );
+                        }
+                        return _UserTile(user: state.users[index]);
+                      },
+                    ),
                   ),
                 );
               }
