@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:tahsel_dashboard/features/admin/domain/services/user_access_policy.dart';
 
 class UserStats extends Equatable {
   final int customers;
@@ -61,7 +62,15 @@ class AppUser extends Equatable {
 
   bool get isActive => accountStatus == 'active';
   bool get isSuspended => accountStatus == 'suspended';
+  bool get isDisabled => accountStatus == 'disabled';
   bool get isDeleted => accountStatus == 'deleted';
+  DateTime? get gracePeriodEnd =>
+      UserAccessPolicy.gracePeriodEnd(subscriptionEnd);
+  bool get isLoginAllowed => UserAccessPolicy.isLoginAllowed(
+        accountStatus: accountStatus,
+        subscriptionSuspended: subscriptionSuspended,
+        subscriptionEnd: subscriptionEnd,
+      );
 
   @override
   List<Object?> get props => [

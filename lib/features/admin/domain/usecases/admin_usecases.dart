@@ -204,6 +204,13 @@ class DeleteUserUseCase extends BaseUseCase<void, String> {
   Future<Either<Failure, void>> call(String uid) => _repo.deleteUser(uid);
 }
 
+class DisableUserUseCase extends BaseUseCase<void, String> {
+  DisableUserUseCase(this._repo);
+  final AdminRepository _repo;
+  @override
+  Future<Either<Failure, void>> call(String uid) => _repo.disableUser(uid);
+}
+
 class SuspendUserUseCase extends BaseUseCase<void, String> {
   SuspendUserUseCase(this._repo);
   final AdminRepository _repo;

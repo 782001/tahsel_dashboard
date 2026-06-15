@@ -80,9 +80,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     ),
                     SizedBox(height: 8.h),
                     _infoRow(
-                      'UID',
+                      'admin_uid'.tr(),
                       user.uid,
                       trailing: CopyButton(text: user.uid),
+                    ),
+                    _infoRow(
+                      'admin_current_status'.tr(),
+                      'status_${user.accountStatus}'.tr(),
                     ),
                     _infoRow(
                       'email_address'.tr(),
@@ -133,6 +137,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       'admin_sub_end'.tr(),
                       user.subscriptionEnd != null
                           ? df.format(user.subscriptionEnd!)
+                          : '-',
+                    ),
+                    _infoRow(
+                      'admin_grace_period_end'.tr(),
+                      user.gracePeriodEnd != null
+                          ? df.format(user.gracePeriodEnd!)
                           : '-',
                     ),
                     Wrap(
@@ -280,6 +290,35 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             ),
                           ),
                         if (user.isSuspended)
+                          CustomButton(
+                            text: 'admin_activate_user'.tr(),
+                            width: 180.w,
+                            color: AppColors.success,
+                            onPressed: () => _confirmAction(
+                              context,
+                              'admin_activate_user'.tr(),
+                              'admin_confirm_activate'.tr(),
+                              () => context
+                                  .read<UserDetailCubit>()
+                                  .activateUser(),
+                              successKey: 'admin_user_activated',
+                            ),
+                          ),
+                        if (!user.isDeleted && !user.isDisabled)
+                          CustomButton(
+                            text: 'admin_disable_user'.tr(),
+                            width: 180.w,
+                            color: AppColors.error,
+                            onPressed: () => _confirmAction(
+                              context,
+                              'admin_disable_user'.tr(),
+                              'admin_confirm_disable'.tr(),
+                              () =>
+                                  context.read<UserDetailCubit>().disableUser(),
+                              successKey: 'admin_user_disabled',
+                            ),
+                          ),
+                        if (user.isDisabled)
                           CustomButton(
                             text: 'admin_activate_user'.tr(),
                             width: 180.w,

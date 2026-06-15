@@ -14,6 +14,7 @@ class StatusBadge extends StatelessWidget {
         return AppColors.success;
       case 'suspended':
         return AppColors.warning;
+      case 'disabled':
       case 'deleted':
       case 'expired':
         return AppColors.error;

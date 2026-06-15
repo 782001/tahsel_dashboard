@@ -55,22 +55,30 @@ class _SplashScreenState extends State<SplashScreen>
     // 2. Minimum splash duration for branding
     await Future.delayed(const Duration(seconds: 2));
 
-    if (mounted) {
-      final authState = context.read<AuthCubit>().state;
-      if (authState is AuthAuthenticated) {
+    if (!mounted) return;
+
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      // Already authenticated in this session — still validate against
+      // Firestore accountStatus to catch real-time revocations.
+      await context.read<AuthCubit>().validateAccountStatus();
+      if (mounted && context.read<AuthCubit>().state is AuthAuthenticated) {
         sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.adminShell);
-      } else {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          await context.read<AuthCubit>().checkSession();
-          if (mounted && context.read<AuthCubit>().state is AuthAuthenticated) {
-            sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.adminShell);
-            return;
-          }
+        return;
+      }
+    } else {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // A Firebase Auth session exists — perform the full status validation
+        // before granting access to the shell.
+        await context.read<AuthCubit>().validateAccountStatus();
+        if (mounted && context.read<AuthCubit>().state is AuthAuthenticated) {
+          sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.adminShell);
+          return;
         }
-        sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.adminLogin);
       }
     }
+    sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.adminLogin);
   }
 
   @override

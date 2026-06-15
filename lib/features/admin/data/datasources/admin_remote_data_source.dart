@@ -17,6 +17,7 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/app_user.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/audit_log.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/broadcast_notification.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.dart';
+import 'package:tahsel_dashboard/features/admin/domain/services/user_access_policy.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
 
@@ -61,6 +62,7 @@ abstract class AdminRemoteDataSource {
   Future<Map<String, dynamic>> createUser(Map<String, dynamic> data);
   Future<void> updateUser(Map<String, dynamic> data);
   Future<void> deleteUser(String uid);
+  Future<void> disableUser(String uid);
   Future<void> suspendUser(String uid);
   Future<void> activateUser(String uid);
   Future<void> sendPasswordResetEmail(String uid);
@@ -99,6 +101,82 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
   DocumentReference<Map<String, dynamic>> _userRef(String uid) =>
       _firestore.collection(AdminConstants.usersCollection).doc(uid);
+
+  Future<void> _revokeUserSessions(String uid) async {
+    final sessionsSnap = await _userRef(uid)
+        .collection(AdminConstants.sessionsSubcollection)
+        .get();
+    if (sessionsSnap.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final doc in sessionsSnap.docs) {
+      batch.update(doc.reference, {
+        'active': false,
+        'revokedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
+  Future<void> _blockUserAccess({
+    required String uid,
+    required String accountStatus,
+    required String reason,
+    String subscriptionStatus = UserAccessPolicy.expired,
+    bool refreshStats = true,
+  }) async {
+    await _userRef(uid).update({
+      'accountStatus': accountStatus,
+      'subscriptionStatus': subscriptionStatus,
+      'loginAllowed': false,
+      'authAccessRevoked': true,
+      'authAccessReason': reason,
+      'authAccessRevokedAt': FieldValue.serverTimestamp(),
+      'forceLogoutAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    await _revokeUserSessions(uid);
+    if (refreshStats) await _stats.refresh();
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> _enforceAccessPolicy(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    if (!doc.exists) return doc;
+
+    final data = doc.data() ?? {};
+    final accountStatus = data['accountStatus'] as String? ?? UserAccessPolicy.active;
+    final subscriptionSuspended = data['subscriptionSuspended'] == true;
+    final subscriptionEnd = _toDate(data['subscriptionEnd']);
+
+    if (!UserAccessPolicy.shouldDisableAfterGrace(
+      accountStatus: accountStatus,
+      subscriptionSuspended: subscriptionSuspended,
+      subscriptionEnd: subscriptionEnd,
+    )) {
+      return doc;
+    }
+
+    await _blockUserAccess(
+      uid: doc.id,
+      accountStatus: UserAccessPolicy.disabled,
+      reason: 'grace_period_expired',
+      refreshStats: false,
+    );
+    return doc.reference.get();
+  }
+
+  String _accountStatusAfterSubscriptionRecovery(Map<String, dynamic> data) {
+    final currentStatus =
+        data['accountStatus'] as String? ?? UserAccessPolicy.active;
+    final reason = data['authAccessReason'] as String?;
+    if (currentStatus == UserAccessPolicy.active ||
+        (currentStatus == UserAccessPolicy.disabled &&
+            reason == 'grace_period_expired')) {
+      return UserAccessPolicy.active;
+    }
+    return currentStatus;
+  }
 
   Future<AdminUser> _requireAdmin() async {
     final session = await verifySession();
@@ -209,7 +287,11 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final snap = await query.limit(limit + 1).get();
     final docs = snap.docs;
     final hasMore = docs.length > limit;
-    final items = docs.take(limit).map(AppUserModel.fromFirestore).toList();
+    final items = await Future.wait(
+      docs.take(limit).map((doc) async {
+        return AppUserModel.fromFirestore(await _enforceAccessPolicy(doc));
+      }),
+    );
     return PaginatedResult(
       items: items,
       hasMore: hasMore,
@@ -238,7 +320,11 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final snap = await q.limit(limit + 1).get();
     final docs = snap.docs;
     final hasMore = docs.length > limit;
-    final items = docs.take(limit).map(AppUserModel.fromFirestore).toList();
+    final items = await Future.wait(
+      docs.take(limit).map((doc) async {
+        return AppUserModel.fromFirestore(await _enforceAccessPolicy(doc));
+      }),
+    );
     return PaginatedResult(
       items: items,
       hasMore: hasMore,
@@ -266,7 +352,11 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final snap = await query.limit(limit + 1).get();
     final docs = snap.docs;
     final hasMore = docs.length > limit;
-    final items = docs.take(limit).map(AppUserModel.fromFirestore).toList();
+    final items = await Future.wait(
+      docs.take(limit).map((doc) async {
+        return AppUserModel.fromFirestore(await _enforceAccessPolicy(doc));
+      }),
+    );
     return PaginatedResult(
       items: items,
       hasMore: hasMore,
@@ -278,7 +368,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
   Future<AppUser> getUserById(String uid) async {
     final doc = await _userRef(uid).get();
     if (!doc.exists) throw Exception('User not found');
-    return AppUserModel.fromFirestore(doc);
+    return AppUserModel.fromFirestore(await _enforceAccessPolicy(doc));
   }
 
   @override
@@ -433,9 +523,9 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     );
     final uid = credential.user!.uid;
     final now = Timestamp.now();
-    final endDate = Timestamp.fromDate(
-      DateTime.now().add(Duration(days: days)),
-    );
+    final subscriptionEndDate = DateTime.now().add(Duration(days: days));
+    final endDate = Timestamp.fromDate(subscriptionEndDate);
+    final graceEndDate = UserAccessPolicy.gracePeriodEnd(subscriptionEndDate)!;
 
     final userDoc = {
       'uid': uid,
@@ -447,6 +537,11 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       'subscriptionSuspended': false,
       'subscriptionStart': now,
       'subscriptionEnd': endDate,
+      'gracePeriodEnd': Timestamp.fromDate(graceEndDate),
+      'loginAllowed': true,
+      'authAccessRevoked': false,
+      'authAccessReason': null,
+      'authAccessRevokedAt': null,
       'createdAt': now,
       'lastLogin': null,
       'lastActive': null,
@@ -525,17 +620,44 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final name = userSnap.data()?['fullName'] as String?;
 
     await _userRef(uid).update({
-      'accountStatus': 'deleted',
       'deletedAt': FieldValue.serverTimestamp(),
-      'subscriptionStatus': 'expired',
-      'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _blockUserAccess(
+      uid: uid,
+      accountStatus: UserAccessPolicy.deleted,
+      reason: 'deleted_by_admin',
+      refreshStats: false,
+    );
 
     await _audit.log(
       admin: admin,
       actionType: 'DELETE_USER',
       targetUserId: uid,
       targetUserName: name,
+    );
+    await _stats.refresh();
+  }
+
+  @override
+  Future<void> disableUser(String uid) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersWrite);
+
+    final userSnap = await _userRef(uid).get();
+    if (!userSnap.exists) throw Exception('User not found');
+
+    await _blockUserAccess(
+      uid: uid,
+      accountStatus: UserAccessPolicy.disabled,
+      reason: 'disabled_by_admin',
+      refreshStats: false,
+    );
+
+    await _audit.log(
+      admin: admin,
+      actionType: 'DISABLE_USER',
+      targetUserId: uid,
+      targetUserName: userSnap.data()?['fullName'] as String?,
     );
     await _stats.refresh();
   }
@@ -548,10 +670,13 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final userSnap = await _userRef(uid).get();
     if (!userSnap.exists) throw Exception('User not found');
 
-    await _userRef(uid).update({
-      'accountStatus': 'suspended',
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    await _blockUserAccess(
+      uid: uid,
+      accountStatus: UserAccessPolicy.suspended,
+      reason: 'suspended_by_admin',
+      subscriptionStatus: UserAccessPolicy.suspended,
+      refreshStats: false,
+    );
 
     await _audit.log(
       admin: admin,
@@ -570,19 +695,42 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final userSnap = await _userRef(uid).get();
     if (!userSnap.exists) throw Exception('User not found');
     final data = userSnap.data()!;
+    final subscriptionEnd = _toDate(data['subscriptionEnd']);
+    final nextAccountStatus = UserAccessPolicy.isLoginAllowed(
+      accountStatus: UserAccessPolicy.active,
+      subscriptionSuspended: false,
+      subscriptionEnd: subscriptionEnd,
+    )
+        ? UserAccessPolicy.active
+        : UserAccessPolicy.disabled;
 
     final subscriptionStatus = SubscriptionUtils.computeStatus(
-      subscriptionEnd: _toDate(data['subscriptionEnd']),
-      accountStatus: 'active',
-      subscriptionSuspended: data['subscriptionSuspended'] == true,
+      subscriptionEnd: subscriptionEnd,
+      accountStatus: nextAccountStatus,
+      subscriptionSuspended: false,
     );
 
     await _userRef(uid).update({
-      'accountStatus': 'active',
+      'accountStatus': nextAccountStatus,
       'subscriptionStatus': subscriptionStatus,
+      'subscriptionSuspended': false,
+      'loginAllowed': nextAccountStatus == UserAccessPolicy.active,
+      'authAccessRevoked': nextAccountStatus != UserAccessPolicy.active,
+      'authAccessReason': nextAccountStatus == UserAccessPolicy.active
+          ? null
+          : 'grace_period_expired',
+      'authAccessRevokedAt': nextAccountStatus == UserAccessPolicy.active
+          ? null
+          : FieldValue.serverTimestamp(),
+      'forceLogoutAt': nextAccountStatus == UserAccessPolicy.active
+          ? null
+          : FieldValue.serverTimestamp(),
       'deletedAt': null,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    if (nextAccountStatus != UserAccessPolicy.active) {
+      await _revokeUserSessions(uid);
+    }
 
     await _audit.log(
       admin: admin,
@@ -627,17 +775,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    final sessionsSnap = await _userRef(uid)
-        .collection(AdminConstants.sessionsSubcollection)
-        .get();
-    final batch = _firestore.batch();
-    for (final doc in sessionsSnap.docs) {
-      batch.update(doc.reference, {
-        'active': false,
-        'revokedAt': FieldValue.serverTimestamp(),
-      });
-    }
-    await batch.commit();
+    await _revokeUserSessions(uid);
 
     await _audit.log(
       admin: admin,
@@ -676,16 +814,43 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
   @override
   Future<void> renewSubscription(String uid, int days) async {
     final admin = await _requireAdmin();
+    final userSnap = await _userRef(uid).get();
+    if (!userSnap.exists) throw Exception('User not found');
+    final data = userSnap.data()!;
+    if ((data['accountStatus'] as String?) == UserAccessPolicy.deleted) {
+      throw Exception('Deleted users cannot be renewed');
+    }
+    final nextAccountStatus = _accountStatusAfterSubscriptionRecovery(data);
+    final end = DateTime.now().add(Duration(days: days));
+    final loginAllowed = UserAccessPolicy.isLoginAllowed(
+      accountStatus: nextAccountStatus,
+      subscriptionSuspended: false,
+      subscriptionEnd: end,
+    );
     final now = Timestamp.now();
-    final endDate = Timestamp.fromDate(DateTime.now().add(Duration(days: days)));
+    final endDate = Timestamp.fromDate(end);
+    final graceEnd = UserAccessPolicy.gracePeriodEnd(end)!;
     await _applySubscriptionUpdate(
       admin: admin,
       uid: uid,
       updates: {
+        'accountStatus': nextAccountStatus,
         'subscriptionStart': now,
         'subscriptionEnd': endDate,
+        'gracePeriodEnd': Timestamp.fromDate(graceEnd),
         'subscriptionSuspended': false,
-        'subscriptionStatus': 'active',
+        'subscriptionStatus': UserAccessPolicy.computeSubscriptionStatus(
+          subscriptionEnd: end,
+          accountStatus: nextAccountStatus,
+          subscriptionSuspended: false,
+        ),
+        'loginAllowed': loginAllowed,
+        'authAccessRevoked': !loginAllowed,
+        'authAccessReason': loginAllowed ? null : data['authAccessReason'],
+        'authAccessRevokedAt':
+            loginAllowed ? null : FieldValue.serverTimestamp(),
+        'forceLogoutAt': loginAllowed ? null : FieldValue.serverTimestamp(),
+        'deletedAt': null,
       },
       actionType: 'RENEW_SUBSCRIPTION',
       metadata: {'days': days},
@@ -700,18 +865,33 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final currentEnd = _toDate(data['subscriptionEnd']) ?? DateTime.now();
     final base = currentEnd.isAfter(DateTime.now()) ? currentEnd : DateTime.now();
     final newEnd = SubscriptionUtils.addDays(base, days);
+    final nextAccountStatus = _accountStatusAfterSubscriptionRecovery(data);
+    final loginAllowed = UserAccessPolicy.isLoginAllowed(
+      accountStatus: nextAccountStatus,
+      subscriptionSuspended: false,
+      subscriptionEnd: newEnd,
+    );
     final status = SubscriptionUtils.computeStatus(
       subscriptionEnd: newEnd,
-      accountStatus: data['accountStatus'] as String? ?? 'active',
+      accountStatus: nextAccountStatus,
       subscriptionSuspended: false,
     );
     await _applySubscriptionUpdate(
       admin: admin,
       uid: uid,
       updates: {
+        'accountStatus': nextAccountStatus,
         'subscriptionEnd': Timestamp.fromDate(newEnd),
+        'gracePeriodEnd': Timestamp.fromDate(
+          UserAccessPolicy.gracePeriodEnd(newEnd)!,
+        ),
         'subscriptionStatus': status,
         'subscriptionSuspended': false,
+        'loginAllowed': loginAllowed,
+        'authAccessRevoked': !loginAllowed,
+        'authAccessReason': loginAllowed ? null : data['authAccessReason'],
+        'authAccessRevokedAt':
+            loginAllowed ? null : FieldValue.serverTimestamp(),
       },
       actionType: 'EXTEND_SUBSCRIPTION',
       metadata: {'days': days},
@@ -725,21 +905,48 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final data = userSnap.data()!;
     final currentEnd = _toDate(data['subscriptionEnd']) ?? DateTime.now();
     final newEnd = SubscriptionUtils.addDays(currentEnd, -days);
+    final currentAccountStatus =
+        data['accountStatus'] as String? ?? UserAccessPolicy.active;
+    final nextAccountStatus = UserAccessPolicy.shouldDisableAfterGrace(
+      accountStatus: currentAccountStatus,
+      subscriptionSuspended: data['subscriptionSuspended'] == true,
+      subscriptionEnd: newEnd,
+    )
+        ? UserAccessPolicy.disabled
+        : currentAccountStatus;
     final status = SubscriptionUtils.computeStatus(
       subscriptionEnd: newEnd,
-      accountStatus: data['accountStatus'] as String? ?? 'active',
+      accountStatus: nextAccountStatus,
       subscriptionSuspended: data['subscriptionSuspended'] == true,
     );
     await _applySubscriptionUpdate(
       admin: admin,
       uid: uid,
       updates: {
+        'accountStatus': nextAccountStatus,
         'subscriptionEnd': Timestamp.fromDate(newEnd),
+        'gracePeriodEnd': Timestamp.fromDate(
+          UserAccessPolicy.gracePeriodEnd(newEnd)!,
+        ),
         'subscriptionStatus': status,
+        'loginAllowed': UserAccessPolicy.isLoginAllowed(
+          accountStatus: nextAccountStatus,
+          subscriptionSuspended: data['subscriptionSuspended'] == true,
+          subscriptionEnd: newEnd,
+        ),
+        if (nextAccountStatus == UserAccessPolicy.disabled) ...{
+          'authAccessRevoked': true,
+          'authAccessReason': 'grace_period_expired',
+          'authAccessRevokedAt': FieldValue.serverTimestamp(),
+          'forceLogoutAt': FieldValue.serverTimestamp(),
+        },
       },
       actionType: 'SHORTEN_SUBSCRIPTION',
       metadata: {'daysRemoved': days},
     );
+    if (nextAccountStatus == UserAccessPolicy.disabled) {
+      await _revokeUserSessions(uid);
+    }
   }
 
   @override
@@ -750,10 +957,16 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       uid: uid,
       updates: {
         'subscriptionSuspended': true,
-        'subscriptionStatus': 'suspended',
+        'subscriptionStatus': UserAccessPolicy.suspended,
+        'loginAllowed': false,
+        'authAccessRevoked': true,
+        'authAccessReason': 'subscription_suspended',
+        'authAccessRevokedAt': FieldValue.serverTimestamp(),
+        'forceLogoutAt': FieldValue.serverTimestamp(),
       },
       actionType: 'SUSPEND_SUBSCRIPTION',
     );
+    await _revokeUserSessions(uid);
   }
 
   @override
@@ -761,20 +974,38 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final admin = await _requireAdmin();
     final userSnap = await _userRef(uid).get();
     final data = userSnap.data()!;
+    final nextAccountStatus = _accountStatusAfterSubscriptionRecovery(data);
     final status = SubscriptionUtils.computeStatus(
       subscriptionEnd: _toDate(data['subscriptionEnd']),
-      accountStatus: data['accountStatus'] as String? ?? 'active',
+      accountStatus: nextAccountStatus,
       subscriptionSuspended: false,
+    );
+    final subscriptionEnd = _toDate(data['subscriptionEnd']);
+    final loginAllowed = UserAccessPolicy.isLoginAllowed(
+      accountStatus: nextAccountStatus,
+      subscriptionSuspended: false,
+      subscriptionEnd: subscriptionEnd,
     );
     await _applySubscriptionUpdate(
       admin: admin,
       uid: uid,
       updates: {
+        'accountStatus': nextAccountStatus,
         'subscriptionSuspended': false,
         'subscriptionStatus': status,
+        'loginAllowed': loginAllowed,
+        'authAccessRevoked': !loginAllowed,
+        'authAccessReason':
+            loginAllowed ? null : data['authAccessReason'] ?? 'grace_period_expired',
+        'authAccessRevokedAt':
+            loginAllowed ? null : FieldValue.serverTimestamp(),
+        'forceLogoutAt': loginAllowed ? null : FieldValue.serverTimestamp(),
       },
       actionType: 'REACTIVATE_SUBSCRIPTION',
     );
+    if (!loginAllowed) {
+      await _revokeUserSessions(uid);
+    }
   }
 
   @override

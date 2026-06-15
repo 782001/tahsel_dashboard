@@ -45,7 +45,13 @@ class AdminRepositoryImpl implements AdminRepository {
   Future<Either<Failure, AdminUser>> signIn(String email, String password) =>
       _guard(() async {
         await _remote.signIn(email, password);
-        final session = await _remote.verifySession();
+        final Map<String, dynamic> session;
+        try {
+          session = await _remote.verifySession();
+        } catch (_) {
+          await _remote.signOut();
+          rethrow;
+        }
         return _mapAdmin(session);
       });
 
@@ -147,6 +153,10 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Future<Either<Failure, void>> deleteUser(String uid) =>
       _guard(() => _remote.deleteUser(uid));
+
+  @override
+  Future<Either<Failure, void>> disableUser(String uid) =>
+      _guard(() => _remote.disableUser(uid));
 
   @override
   Future<Either<Failure, void>> suspendUser(String uid) =>

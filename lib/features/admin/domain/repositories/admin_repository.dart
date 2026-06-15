@@ -51,6 +51,7 @@ abstract class AdminRepository {
   Future<Either<Failure, Map<String, dynamic>>> createUser(Map<String, dynamic> data);
   Future<Either<Failure, void>> updateUser(Map<String, dynamic> data);
   Future<Either<Failure, void>> deleteUser(String uid);
+  Future<Either<Failure, void>> disableUser(String uid);
   Future<Either<Failure, void>> suspendUser(String uid);
   Future<Either<Failure, void>> activateUser(String uid);
   Future<Either<Failure, void>> resetPassword(String uid, String newPassword);

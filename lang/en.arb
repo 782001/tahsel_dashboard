@@ -1,0 +1,16 @@
+{
+  "@@locale": "en",
+  "admin_uid": "UID",
+  "admin_current_status": "Current Status",
+  "admin_grace_period_end": "Grace Period End",
+  "admin_disable_user": "Disable User",
+  "admin_confirm_disable": "Are you sure you want to disable this user? They will not be allowed to log in.",
+  "admin_user_disabled": "User disabled",
+  "status_active": "Active",
+  "status_suspended": "Suspended",
+  "status_disabled": "Disabled",
+  "status_deleted": "Deleted",
+  "status_expired": "Subscription Expired",
+  "status_grace_period_expired": "Grace Period Expired",
+  "login_not_allowed": "Login Not Allowed"
+}

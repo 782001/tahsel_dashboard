@@ -52,6 +52,7 @@ void registerAdminDependencies() {
   sl.registerLazySingleton(() => CreateUserUseCase(sl()));
   sl.registerLazySingleton(() => UpdateUserUseCase(sl()));
   sl.registerLazySingleton(() => DeleteUserUseCase(sl()));
+  sl.registerLazySingleton(() => DisableUserUseCase(sl()));
   sl.registerLazySingleton(() => SuspendUserUseCase(sl()));
   sl.registerLazySingleton(() => ActivateUserUseCase(sl()));
   sl.registerLazySingleton(() => ResetPasswordUseCase(sl()));
@@ -79,6 +80,7 @@ void registerAdminDependencies() {
         searchUsers: sl(),
         createUser: sl(),
         deleteUser: sl(),
+        disableUser: sl(),
         suspendUser: sl(),
         activateUser: sl(),
       ));
@@ -92,6 +94,7 @@ void registerAdminDependencies() {
         getSessions: sl(),
         updateUser: sl(),
         deleteUser: sl(),
+        disableUser: sl(),
         suspendUser: sl(),
         activateUser: sl(),
         resetPassword: sl(),

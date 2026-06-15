@@ -10,12 +10,14 @@ class UsersCubit extends Cubit<UsersState> {
     required SearchUsersUseCase searchUsers,
     required CreateUserUseCase createUser,
     required DeleteUserUseCase deleteUser,
+    required DisableUserUseCase disableUser,
     required SuspendUserUseCase suspendUser,
     required ActivateUserUseCase activateUser,
   })  : _getUsers = getUsers,
         _searchUsers = searchUsers,
         _createUser = createUser,
         _deleteUser = deleteUser,
+        _disableUser = disableUser,
         _suspendUser = suspendUser,
         _activateUser = activateUser,
         super(UsersInitial());
@@ -24,6 +26,7 @@ class UsersCubit extends Cubit<UsersState> {
   final SearchUsersUseCase _searchUsers;
   final CreateUserUseCase _createUser;
   final DeleteUserUseCase _deleteUser;
+  final DisableUserUseCase _disableUser;
   final SuspendUserUseCase _suspendUser;
   final ActivateUserUseCase _activateUser;
 
@@ -115,6 +118,17 @@ class UsersCubit extends Cubit<UsersState> {
 
   Future<bool> suspendUser(String uid) async {
     final result = await _suspendUser(uid);
+    return result.fold((f) {
+      emit(UserActionError(f.message));
+      return false;
+    }, (_) {
+      load(refresh: true);
+      return true;
+    });
+  }
+
+  Future<bool> disableUser(String uid) async {
+    final result = await _disableUser(uid);
     return result.fold((f) {
       emit(UserActionError(f.message));
       return false;

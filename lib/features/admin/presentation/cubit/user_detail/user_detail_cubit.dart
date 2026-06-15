@@ -9,6 +9,7 @@ class UserDetailCubit extends Cubit<UserDetailState> {
     required GetUserSessionsUseCase getSessions,
     required UpdateUserUseCase updateUser,
     required DeleteUserUseCase deleteUser,
+    required DisableUserUseCase disableUser,
     required SuspendUserUseCase suspendUser,
     required ActivateUserUseCase activateUser,
     required ResetPasswordUseCase resetPassword,
@@ -20,6 +21,7 @@ class UserDetailCubit extends Cubit<UserDetailState> {
         _getSessions = getSessions,
         _updateUser = updateUser,
         _deleteUser = deleteUser,
+        _disableUser = disableUser,
         _suspendUser = suspendUser,
         _activateUser = activateUser,
         _resetPassword = resetPassword,
@@ -33,6 +35,7 @@ class UserDetailCubit extends Cubit<UserDetailState> {
   final GetUserSessionsUseCase _getSessions;
   final UpdateUserUseCase _updateUser;
   final DeleteUserUseCase _deleteUser;
+  final DisableUserUseCase _disableUser;
   final SuspendUserUseCase _suspendUser;
   final ActivateUserUseCase _activateUser;
   final ResetPasswordUseCase _resetPassword;
@@ -155,6 +158,18 @@ class UserDetailCubit extends Cubit<UserDetailState> {
   Future<bool> suspendUser() async {
     emit(UserDetailActionLoading());
     final result = await _suspendUser(_uid!);
+    return result.fold((f) {
+      emit(UserDetailError(f.message));
+      return false;
+    }, (_) async {
+      await load(_uid!);
+      return true;
+    });
+  }
+
+  Future<bool> disableUser() async {
+    emit(UserDetailActionLoading());
+    final result = await _disableUser(_uid!);
     return result.fold((f) {
       emit(UserDetailError(f.message));
       return false;

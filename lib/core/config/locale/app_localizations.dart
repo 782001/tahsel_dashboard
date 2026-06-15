@@ -36,6 +36,22 @@ class AppLocalizations {
     _localizedStrings = jsonMap.map<String, String>((key, value) {
       return MapEntry(key, value.toString());
     });
+
+    try {
+      final arbString = await rootBundle.loadString(
+        'lang/${locale.languageCode}.arb',
+      );
+      final arbMap = json.decode(arbString) as Map<String, dynamic>;
+      _localizedStrings.addAll(
+        Map.fromEntries(
+          arbMap.entries
+              .where((entry) => !entry.key.startsWith('@'))
+              .map((entry) => MapEntry(entry.key, entry.value.toString())),
+        ),
+      );
+    } catch (_) {
+      // JSON remains the compatibility fallback for existing translations.
+    }
     _instance = this; // Update static instance
   }
 

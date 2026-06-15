@@ -1,0 +1,16 @@
+{
+  "@@locale": "ar",
+  "admin_uid": "المعرف",
+  "admin_current_status": "الحالة الحالية",
+  "admin_grace_period_end": "نهاية فترة السماح",
+  "admin_disable_user": "تعطيل المستخدم",
+  "admin_confirm_disable": "هل أنت متأكد من تعطيل هذا المستخدم؟ لن يُسمح له بتسجيل الدخول.",
+  "admin_user_disabled": "تم تعطيل المستخدم",
+  "status_active": "نشط",
+  "status_suspended": "موقوف",
+  "status_disabled": "معطل",
+  "status_deleted": "محذوف",
+  "status_expired": "منتهي الاشتراك",
+  "status_grace_period_expired": "انتهت فترة السماح",
+  "login_not_allowed": "لا يمكن تسجيل الدخول"
+}

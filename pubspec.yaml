@@ -98,6 +98,8 @@ flutter:
     - assets/svg/
     - lang/ar.json
     - lang/en.json
+    - lang/ar.arb
+    - lang/en.arb
 
   fonts:
     - family: DGAgnadeen
