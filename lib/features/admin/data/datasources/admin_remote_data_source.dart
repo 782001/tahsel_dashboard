@@ -537,6 +537,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       'subscriptionSuspended': false,
       'subscriptionStart': now,
       'userType': data['userType'] ?? 'cafe',
+      'platformType': data['platformType']??"mobile",
       'subscriptionEnd': endDate,
       'gracePeriodEnd': Timestamp.fromDate(graceEndDate),
       'loginAllowed': true,
@@ -594,6 +595,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     if (data['phoneNumber'] != null) updates['phoneNumber'] = data['phoneNumber'];
     if (data['email'] != null) updates['email'] = (data['email'] as String).toLowerCase();
     if (data['userType'] != null) updates['userType'] = data['userType'];
+    if (data['platformType'] != null) updates['platformType'] = data['platformType'];
 
     updates['searchKeywords'] = SearchKeywordsBuilder.build(
       uid: uid,

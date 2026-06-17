@@ -104,6 +104,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           : 'user_type_cafe'.tr(),
                     ),
                     _infoRow(
+                      'admin_platform_type'.tr(),
+                      user.platformType == 'desktop'
+                          ? 'platform_type_desktop'.tr()
+                          : user.platformType == 'both'
+                          ? 'platform_type_both'.tr()
+                          : 'platform_type_mobile'.tr(),
+                    ),
+                    _infoRow(
                       'admin_created'.tr(),
                       user.createdAt != null ? df.format(user.createdAt!) : '-',
                     ),
@@ -520,6 +528,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     final emailController = TextEditingController(text: user.email);
     final phoneController = TextEditingController(text: user.phoneNumber);
     String selectedUserType = user.userType;
+    String selectedPlatformType = user.platformType;
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -555,6 +564,26 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   ),
                 ],
                 onChanged: (v) => setState(() => selectedUserType = v ?? 'cafe'),
+              ),
+              SizedBox(height: 12.h),
+              DropdownButtonFormField<String>(
+                initialValue: selectedPlatformType,
+                decoration: InputDecoration(labelText: 'admin_platform_type'.tr()),
+                items: [
+                  DropdownMenuItem(
+                    value: 'mobile',
+                    child: TextWidget('platform_type_mobile'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'desktop',
+                    child: TextWidget('platform_type_desktop'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'both',
+                    child: TextWidget('platform_type_both'.tr()),
+                  ),
+                ],
+                onChanged: (v) => setState(() => selectedPlatformType = v ?? 'mobile'),
               ),
             ],
           ),

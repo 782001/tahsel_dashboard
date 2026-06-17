@@ -8,7 +8,6 @@ import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_cub
 import 'package:tahsel_dashboard/features/admin/presentation/screens/audit/audit_logs_screen.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/screens/dashboard/admin_dashboard_screen.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/screens/expiration/expiration_screen.dart';
-import 'package:tahsel_dashboard/features/admin/presentation/screens/notifications/notifications_screen.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/screens/settings/system_settings_screen.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/screens/users/users_list_screen.dart';
 import 'package:tahsel_dashboard/features/standard_features/localization/presentation/widgets/language_section.dart';
@@ -30,7 +29,7 @@ class _AdminShellState extends State<AdminShell> {
     UsersListScreen(),
     ExpirationScreen(),
     AuditLogsScreen(),
-    NotificationsScreen(),
+    // NotificationsScreen(),
     SystemSettingsScreen(),
   ];
 
@@ -39,7 +38,7 @@ class _AdminShellState extends State<AdminShell> {
     _NavItem('admin_nav_users'.tr(), Icons.people_outline),
     _NavItem('admin_nav_expiration'.tr(), Icons.schedule),
     _NavItem('admin_nav_audit'.tr(), Icons.history),
-    _NavItem('admin_nav_notifications'.tr(), Icons.campaign_outlined),
+    // _NavItem('admin_nav_notifications'.tr(), Icons.campaign_outlined),
     _NavItem('admin_nav_settings'.tr(), Icons.settings_outlined),
   ];
 

@@ -15,5 +15,9 @@
   "login_not_allowed": "Login Not Allowed",
   "admin_user_type": "Account Type",
   "user_type_cafe": "PlayStation / Cafe",
-  "user_type_shop": "Shop"
+  "user_type_shop": "Shop",
+  "admin_platform_type": "Platform Type",
+  "platform_type_mobile": "Mobile",
+  "platform_type_desktop": "Desktop",
+  "platform_type_both": "Both"
 }

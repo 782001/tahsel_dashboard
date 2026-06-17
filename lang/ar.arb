@@ -15,5 +15,9 @@
   "login_not_allowed": "لا يمكن تسجيل الدخول",
   "admin_user_type": "نوع الحساب",
   "user_type_cafe": "بلايستيشن / كافيه",
-  "user_type_shop": "محل"
+  "user_type_shop": "محل",
+  "admin_platform_type": "نوع المنصة",
+  "platform_type_mobile": "هاتف",
+  "platform_type_desktop": "كمبيوتر",
+  "platform_type_both": "كلاهما"
 }
