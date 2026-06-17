@@ -19,5 +19,7 @@
   "admin_platform_type": "Platform Type",
   "platform_type_mobile": "Mobile",
   "platform_type_desktop": "Desktop",
-  "platform_type_both": "Both"
+  "platform_type_both": "Both",
+  "phone_copied": "Phone copied to clipboard",
+  "admin_not_found": "Not Found"
 }

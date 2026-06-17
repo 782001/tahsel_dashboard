@@ -96,7 +96,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         tostText: 'email_copied',
                       ),
                     ),
-                    _infoRow('customer_phone'.tr(), user.phoneNumber),
+                    _infoRow(
+                      'customer_phone'.tr(),
+                      user.phoneNumber.isEmpty
+                          ? 'admin_not_found'.tr()
+                          : user.phoneNumber,
+                      trailing: CopyButton(
+                        text: user.phoneNumber,
+                        tostText: 'phone_copied',
+                      ),
+                    ),
                     _infoRow(
                       'admin_user_type'.tr(),
                       user.userType == 'shop'
@@ -165,17 +174,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       children: [
                         for (final days in AdminConstants.subscriptionPresets)
                           OutlinedButton(
-                            onPressed: () => _subscription(
-                              SubscriptionAction.renew,
-                              days,
-                            ),
+                            onPressed: () =>
+                                _subscription(SubscriptionAction.renew, days),
                             child: TextWidget('${'admin_renew'.tr()} $days'),
                           ),
                         OutlinedButton(
-                          onPressed: () => _subscription(
-                            SubscriptionAction.extend,
-                            30,
-                          ),
+                          onPressed: () =>
+                              _subscription(SubscriptionAction.extend, 30),
                           child: TextWidget('admin_extend'.tr()),
                         ),
                         OutlinedButton(
@@ -183,17 +188,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           child: TextWidget('admin_shorten'.tr()),
                         ),
                         OutlinedButton(
-                          onPressed: () => _subscription(
-                            SubscriptionAction.suspend,
-                            0,
-                          ),
+                          onPressed: () =>
+                              _subscription(SubscriptionAction.suspend, 0),
                           child: TextWidget('admin_suspend_sub'.tr()),
                         ),
                         OutlinedButton(
-                          onPressed: () => _subscription(
-                            SubscriptionAction.reactivate,
-                            0,
-                          ),
+                          onPressed: () =>
+                              _subscription(SubscriptionAction.reactivate, 0),
                           child: TextWidget('admin_reactivate_sub'.tr()),
                         ),
                         OutlinedButton(
@@ -221,7 +222,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                   Icons.circle,
                                   color: AppColors.success,
                                   size: 10.sp,
-                               )
+                                )
                               : null,
                         ),
                       ),
@@ -251,8 +252,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit_outlined),
-                                onPressed: () =>
-                                    _editNote(n.id, n.content),
+                                onPressed: () => _editNote(n.id, n.content),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline),
@@ -444,10 +444,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
   }
 
-  Future<void> _subscription(
-    SubscriptionAction action,
-    int days,
-  ) async {
+  Future<void> _subscription(SubscriptionAction action, int days) async {
     final cubit = context.read<UserDetailCubit>();
     final ok = await cubit.subscriptionAction(
       SubscriptionParams(uid: widget.uid, action: action, days: days),
@@ -471,34 +468,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   Future<void> _addNote() async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
+    // Capture the cubit from the screen's context before opening the dialog
+    final userDetailCubit = context.read<UserDetailCubit>();
+
+    await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: TextWidget('admin_add_note'.tr()),
-        content: TextField(controller: controller, maxLines: 3),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: TextWidget('cancel'.tr()),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: TextWidget('confirm'.tr()),
-          ),
-        ],
-      ),
+      builder: (dialogContext) => _AddNoteDialog(cubit: userDetailCubit),
     );
-    controller.dispose();
-    if (result != null && result.isNotEmpty && mounted) {
-      await context.read<UserDetailCubit>().addNote(result);
-    }
   }
 
-  Future<void> _editNote(
-    String noteId,
-    String current,
-  ) async {
+  Future<void> _editNote(String noteId, String current) async {
     final controller = TextEditingController(text: current);
     final result = await showDialog<String>(
       context: context,
@@ -563,12 +542,15 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     child: TextWidget('user_type_shop'.tr()),
                   ),
                 ],
-                onChanged: (v) => setState(() => selectedUserType = v ?? 'cafe'),
+                onChanged: (v) =>
+                    setState(() => selectedUserType = v ?? 'cafe'),
               ),
               SizedBox(height: 12.h),
               DropdownButtonFormField<String>(
                 initialValue: selectedPlatformType,
-                decoration: InputDecoration(labelText: 'admin_platform_type'.tr()),
+                decoration: InputDecoration(
+                  labelText: 'admin_platform_type'.tr(),
+                ),
                 items: [
                   DropdownMenuItem(
                     value: 'mobile',
@@ -583,7 +565,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     child: TextWidget('platform_type_both'.tr()),
                   ),
                 ],
-                onChanged: (v) => setState(() => selectedPlatformType = v ?? 'mobile'),
+                onChanged: (v) =>
+                    setState(() => selectedPlatformType = v ?? 'mobile'),
               ),
             ],
           ),
@@ -706,5 +689,56 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         Navigator.pop(context);
       }
     }
+  }
+}
+
+// Create an isolated Stateful widget at the bottom of your file
+class _AddNoteDialog extends StatefulWidget {
+  final UserDetailCubit cubit;
+  const _AddNoteDialog({required this.cubit});
+
+  @override
+  State<_AddNoteDialog> createState() => _AddNoteDialogState();
+}
+
+class _AddNoteDialogState extends State<_AddNoteDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose(); // Safely managed by framework
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: TextWidget('admin_add_note'.tr()),
+      content: TextField(controller: _controller, autofocus: true),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: TextWidget('cancel'.tr()),
+        ),
+        CustomButton(
+          text: 'confirm'.tr(),
+          width: 100.w,
+          onPressed: () {
+            if (_controller.text.trim().isNotEmpty) {
+              // Note: Use the parent context to read the Cubit,
+              // as dialogContext might not have the provider if it's not structural
+              widget.cubit.addNote(_controller.text.trim());
+              Navigator.pop(context);
+            }
+          },
+        ),
+      ],
+    );
   }
 }

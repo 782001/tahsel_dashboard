@@ -119,5 +119,7 @@
   "admin_platform_type": "نوع المنصة",
   "platform_type_mobile": "هاتف",
   "platform_type_desktop": "كمبيوتر",
-  "platform_type_both": "كلاهما"
+  "platform_type_both": "كلاهما",
+  "phone_copied": "تم نسخ رقم الهاتف",
+  "admin_not_found": "غير موجود"
 }
