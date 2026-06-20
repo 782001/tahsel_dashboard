@@ -76,8 +76,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
                 );
               }
 
-              Future<void> onRefresh() =>
-                  context.read<UsersCubit>().load();
+              Future<void> onRefresh() => context.read<UsersCubit>().load();
 
               if (state is UsersError) {
                 return RefreshIndicator(
@@ -177,12 +176,19 @@ class _UserTile extends StatelessWidget {
               style: TextStyles.font14Weight400RightAligned(),
             ),
             SizedBox(height: 4.h),
-            Row(
-              children: [
-                StatusBadge(statusKey: user.accountStatus),
-                SizedBox(width: 8.w),
-                StatusBadge(statusKey: user.subscriptionStatus),
-              ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  StatusBadge(statusKey: user.accountStatus),
+                  SizedBox(width: 8.w),
+                  StatusBadge(statusKey: user.subscriptionStatus),
+                  SizedBox(width: 8.w),
+                  StatusBadge(
+                    statusKey: 'platform_type_${user.platformType ?? 'mobile'}',
+                  ),
+                ],
+              ),
             ),
             if (user.subscriptionEnd != null)
               TextWidget(

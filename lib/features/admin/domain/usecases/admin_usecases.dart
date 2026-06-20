@@ -413,3 +413,12 @@ class SetupAdminParams {
   final String name;
   SetupAdminParams({required this.email, required this.name});
 }
+
+class CheckExpiredAccountsUseCase extends BaseUseCase<void, NoParams> {
+  CheckExpiredAccountsUseCase(this._repo);
+  final AdminRepository _repo;
+  @override
+  Future<Either<Failure, void>> call(NoParams params) =>
+      _repo.checkExpiredAccounts();
+}
+

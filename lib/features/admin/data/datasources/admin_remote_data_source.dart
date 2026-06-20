@@ -78,6 +78,7 @@ abstract class AdminRemoteDataSource {
   Future<void> sendNotification(Map<String, dynamic> data);
   Future<void> updateAppSettings(AppSettings settings);
   Future<void> setupInitialAdmin(String email, String name);
+  Future<void> checkExpiredAccounts();
 }
 
 class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
@@ -159,7 +160,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
     await _blockUserAccess(
       uid: doc.id,
-      accountStatus: UserAccessPolicy.disabled,
+      accountStatus: UserAccessPolicy.expired,
       reason: 'grace_period_expired',
       refreshStats: false,
     );
@@ -172,6 +173,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final reason = data['authAccessReason'] as String?;
     if (currentStatus == UserAccessPolicy.active ||
         (currentStatus == UserAccessPolicy.disabled &&
+            reason == 'grace_period_expired') ||
+        (currentStatus == UserAccessPolicy.expired &&
             reason == 'grace_period_expired')) {
       return UserAccessPolicy.active;
     }
@@ -1175,6 +1178,43 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       'bootstrapCompletedBy': user.uid,
     }, SetOptions(merge: true));
     await batch.commit();
+  }
+
+  @override
+  Future<void> checkExpiredAccounts() async {
+    final now = DateTime.now();
+    final graceLimit = now.subtract(const Duration(days: 10)); // 10 days grace period
+
+    final usersSnap = await _firestore
+        .collection(AdminConstants.usersCollection)
+        .where('accountStatus', isEqualTo: 'active')
+        .where('subscriptionEnd', isLessThan: Timestamp.fromDate(graceLimit))
+        .get();
+
+    if (usersSnap.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final doc in usersSnap.docs) {
+      batch.update(doc.reference, {
+        'accountStatus': 'expired',
+        'subscriptionStatus': 'expired',
+        'loginAllowed': false,
+        'authAccessRevoked': true,
+        'authAccessReason': 'grace_period_expired',
+        'authAccessRevokedAt': FieldValue.serverTimestamp(),
+        'forceLogoutAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+
+    for (final doc in usersSnap.docs) {
+      try {
+        await _revokeUserSessions(doc.id);
+      } catch (_) {
+        // Ignore session revocation errors for individual users
+      }
+    }
   }
 
   DateTime? _toDate(dynamic value) {

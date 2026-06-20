@@ -25,8 +25,8 @@ class _AdminShellState extends State<AdminShell> {
   int _selectedIndex = 0;
 
   final _screens = const [
-    AdminDashboardScreen(),
-    UsersListScreen(),
+    UsersListScreen(), AdminDashboardScreen(),
+
     ExpirationScreen(),
     AuditLogsScreen(),
     // NotificationsScreen(),
@@ -34,8 +34,9 @@ class _AdminShellState extends State<AdminShell> {
   ];
 
   List<_NavItem> get _navItems => [
-    _NavItem('admin_nav_dashboard'.tr(), Icons.dashboard_outlined),
     _NavItem('admin_nav_users'.tr(), Icons.people_outline),
+    _NavItem('admin_nav_dashboard'.tr(), Icons.dashboard_outlined),
+
     _NavItem('admin_nav_expiration'.tr(), Icons.schedule),
     _NavItem('admin_nav_audit'.tr(), Icons.history),
     // _NavItem('admin_nav_notifications'.tr(), Icons.campaign_outlined),

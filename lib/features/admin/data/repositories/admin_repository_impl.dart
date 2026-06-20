@@ -218,4 +218,8 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Future<Either<Failure, void>> setupInitialAdmin(String email, String name) =>
       _guard(() => _remote.setupInitialAdmin(email, name));
+
+  @override
+  Future<Either<Failure, void>> checkExpiredAccounts() =>
+      _guard(_remote.checkExpiredAccounts);
 }

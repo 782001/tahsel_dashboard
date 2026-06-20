@@ -151,8 +151,9 @@ class _ExpirationTile extends StatelessWidget {
                       final ok = await context
                           .read<ExpirationCubit>()
                           .quickRenew(user.uid);
-                      if (ok)
+                      if (ok) {
                         showSuccessToast('admin_subscription_updated'.tr());
+                      }
                     },
                   ),
                 ],

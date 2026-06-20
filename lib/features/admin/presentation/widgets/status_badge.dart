@@ -20,6 +20,10 @@ class StatusBadge extends StatelessWidget {
         return AppColors.error;
       case 'expiring_soon':
         return AppColors.warning;
+      case 'platform_type_mobile':
+      case 'platform_type_desktop':
+      case 'platform_type_both':
+        return AppColors.primaryColor;
       default:
         return AppColors.info;
     }
@@ -27,6 +31,7 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textKey = statusKey.startsWith('platform_type_') ? statusKey : 'status_$statusKey';
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
@@ -34,7 +39,7 @@ class StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: Text(
-        AppLocalizations.tr('status_$statusKey'),
+        AppLocalizations.tr(textKey),
         style: TextStyle(
           color: _color,
           fontSize: 12.sp,

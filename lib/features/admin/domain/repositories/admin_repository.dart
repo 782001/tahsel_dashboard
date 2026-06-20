@@ -67,4 +67,5 @@ abstract class AdminRepository {
   Future<Either<Failure, void>> sendNotification(Map<String, dynamic> data);
   Future<Either<Failure, void>> updateAppSettings(AppSettings settings);
   Future<Either<Failure, void>> setupInitialAdmin(String email, String name);
+  Future<Either<Failure, void>> checkExpiredAccounts();
 }

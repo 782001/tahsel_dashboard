@@ -66,6 +66,7 @@ void registerAdminDependencies() {
   sl.registerLazySingleton(() => SendNotificationUseCase(sl()));
   sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
   sl.registerLazySingleton(() => SetupInitialAdminUseCase(sl()));
+  sl.registerLazySingleton(() => CheckExpiredAccountsUseCase(sl()));
 
   // Cubits
   sl.registerFactory(() => AuthCubit(
@@ -74,7 +75,7 @@ void registerAdminDependencies() {
         signOut: sl(),
         setupAdmin: sl(),
       ));
-  sl.registerFactory(() => DashboardCubit(sl()));
+  sl.registerFactory(() => DashboardCubit(sl(), sl()));
   sl.registerFactory(() => UsersCubit(
         getUsers: sl(),
         searchUsers: sl(),

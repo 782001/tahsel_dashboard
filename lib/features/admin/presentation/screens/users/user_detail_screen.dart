@@ -592,6 +592,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           email: emailController.text.trim(),
           phoneNumber: phoneController.text.trim(),
           userType: selectedUserType,
+          platformType: selectedPlatformType,
         ),
       );
       nameController.dispose();
