@@ -1,16 +1,32 @@
 import 'package:equatable/equatable.dart';
 
 class AppSettings extends Equatable {
-  final String minSupportedVersion;
-  final String latestVersion;
+  final String androidDownloadUrl;
+  final String windowsDownloadUrl;
+  final String iosDownloadUrl;
+  final int latestVersion;
+  final String versionName;
   final bool forceUpdate;
+  final String updateMessage;
 
   const AppSettings({
-    this.minSupportedVersion = '1.0.0',
-    this.latestVersion = '1.0.0',
+    this.androidDownloadUrl = '',
+    this.windowsDownloadUrl = '',
+    this.iosDownloadUrl = '',
+    this.latestVersion = 1,
+    this.versionName = '1.0.0',
     this.forceUpdate = false,
+    this.updateMessage = '',
   });
 
   @override
-  List<Object?> get props => [minSupportedVersion, latestVersion, forceUpdate];
+  List<Object?> get props => [
+        androidDownloadUrl,
+        windowsDownloadUrl,
+        iosDownloadUrl,
+        latestVersion,
+        versionName,
+        forceUpdate,
+        updateMessage,
+      ];
 }

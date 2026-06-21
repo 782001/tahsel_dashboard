@@ -8,8 +8,8 @@ class AdminConstants {
   static const String auditLogsCollection = 'audit_logs';
   static const String dashboardStatsCollection = 'dashboard_stats';
   static const String dashboardStatsDoc = 'summary';
-  static const String systemSettingsCollection = 'system_settings';
-  static const String appVersionDoc = 'app_version';
+  static const String systemSettingsCollection = 'app_config';
+  static const String appVersionDoc = 'version_control';
   static const String notificationsCollection = 'notifications';
   static const String adminsCollection = 'admins';
   static const String notesSubcollection = 'notes';

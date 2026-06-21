@@ -466,9 +466,13 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     if (!doc.exists) return const AppSettings();
     final data = doc.data() ?? {};
     return AppSettings(
-      minSupportedVersion: data['minSupportedVersion'] ?? '1.0.0',
-      latestVersion: data['latestVersion'] ?? '1.0.0',
-      forceUpdate: data['forceUpdate'] ?? false,
+      androidDownloadUrl: data['android_download_url'] as String? ?? '',
+      windowsDownloadUrl: data['windows_download_url'] as String? ?? '',
+      iosDownloadUrl: data['ios_download_url'] as String? ?? '',
+      latestVersion: (data['latest_version'] as num?)?.toInt() ?? 1,
+      versionName: data['version_name'] as String? ?? '1.0.0',
+      forceUpdate: data['force_update'] as bool? ?? false,
+      updateMessage: data['update_message'] as String? ?? '',
     );
   }
 
@@ -1120,9 +1124,13 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
         .collection(AdminConstants.systemSettingsCollection)
         .doc(AdminConstants.appVersionDoc)
         .set({
-      'minSupportedVersion': settings.minSupportedVersion,
-      'latestVersion': settings.latestVersion,
-      'forceUpdate': settings.forceUpdate,
+      'android_download_url': settings.androidDownloadUrl,
+      'windows_download_url': settings.windowsDownloadUrl,
+      'ios_download_url': settings.iosDownloadUrl,
+      'latest_version': settings.latestVersion,
+      'version_name': settings.versionName,
+      'force_update': settings.forceUpdate,
+      'update_message': settings.updateMessage,
       'updatedAt': FieldValue.serverTimestamp(),
       'updatedBy': admin.uid,
     }, SetOptions(merge: true));
@@ -1131,9 +1139,9 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       admin: admin,
       actionType: 'UPDATE_SETTINGS',
       metadata: {
-        'minSupportedVersion': settings.minSupportedVersion,
-        'latestVersion': settings.latestVersion,
-        'forceUpdate': settings.forceUpdate,
+        'latest_version': settings.latestVersion,
+        'version_name': settings.versionName,
+        'force_update': settings.forceUpdate,
       },
     );
   }
