@@ -22,6 +22,19 @@ class SettingsSaving extends SettingsState {}
 
 class SettingsSaved extends SettingsState {}
 
+/// Granular saving states so the UI can show per-platform loaders.
+class SettingsSavingAndroid extends SettingsState {}
+
+class SettingsSavingIos extends SettingsState {}
+
+class SettingsSavingWindows extends SettingsState {}
+
+class SettingsSavedAndroid extends SettingsState {}
+
+class SettingsSavedIos extends SettingsState {}
+
+class SettingsSavedWindows extends SettingsState {}
+
 class SettingsError extends SettingsState {
   final String message;
   const SettingsError(this.message);

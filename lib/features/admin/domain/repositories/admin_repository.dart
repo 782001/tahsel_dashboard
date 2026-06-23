@@ -10,6 +10,8 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
 
+enum ReleasePlatform { android, ios, windows }
+
 abstract class AdminRepository {
   Future<Either<Failure, AdminUser>> signIn(String email, String password);
   Future<Either<Failure, void>> signOut();
@@ -66,6 +68,10 @@ abstract class AdminRepository {
   Future<Either<Failure, void>> deleteNote(String uid, String noteId);
   Future<Either<Failure, void>> sendNotification(Map<String, dynamic> data);
   Future<Either<Failure, void>> updateAppSettings(AppSettings settings);
+  Future<Either<Failure, void>> updatePlatformRelease(
+    ReleasePlatform platform,
+    PlatformRelease release,
+  );
   Future<Either<Failure, void>> setupInitialAdmin(String email, String name);
   Future<Either<Failure, void>> checkExpiredAccounts();
 }

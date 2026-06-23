@@ -133,5 +133,20 @@
   "platform_type_desktop": "Desktop",
   "platform_type_both": "Both",
   "phone_copied": "Phone copied to clipboard",
-  "admin_not_found": "Not Found"
+  "admin_not_found": "Not Found",
+  "admin_build_number": "Build Number (Version Code)",
+  "admin_build_number_hint": "e.g. 12",
+  "admin_store_url": "Store URL / Download URL",
+  "admin_store_url_hint": "https://...",
+  "admin_update_title": "Update Title",
+  "admin_update_title_hint": "e.g. New version available!",
+  "admin_release_notes": "Release Notes",
+  "admin_release_notes_hint": "Describe what's new in this release...",
+  "admin_save_android": "Save Android Settings",
+  "admin_save_ios": "Save iOS Settings",
+  "admin_save_windows": "Save Windows Settings",
+  "admin_saving": "Saving...",
+  "admin_settings_saved_android": "Android settings saved",
+  "admin_settings_saved_ios": "iOS settings saved",
+  "admin_settings_saved_windows": "Windows settings saved"
 }

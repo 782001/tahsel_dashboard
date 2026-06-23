@@ -20,6 +20,8 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.
 import 'package:tahsel_dashboard/features/admin/domain/services/user_access_policy.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
+import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart'
+    show ReleasePlatform;
 
 abstract class AdminRemoteDataSource {
   Future<Map<String, dynamic>> verifySession();
@@ -77,6 +79,10 @@ abstract class AdminRemoteDataSource {
   Future<void> deleteNote(String uid, String noteId);
   Future<void> sendNotification(Map<String, dynamic> data);
   Future<void> updateAppSettings(AppSettings settings);
+  Future<void> updatePlatformRelease(
+    ReleasePlatform platform,
+    PlatformRelease release,
+  );
   Future<void> setupInitialAdmin(String email, String name);
   Future<void> checkExpiredAccounts();
 }
@@ -465,15 +471,25 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
         .get();
     if (!doc.exists) return const AppSettings();
     final data = doc.data() ?? {};
-    return AppSettings(
-      androidDownloadUrl: data['android_download_url'] as String? ?? '',
-      windowsDownloadUrl: data['windows_download_url'] as String? ?? '',
-      iosDownloadUrl: data['ios_download_url'] as String? ?? '',
-      latestVersion: (data['latest_version'] as num?)?.toInt() ?? 1,
-      versionName: data['version_name'] as String? ?? '1.0.0',
-      forceUpdate: data['force_update'] as bool? ?? false,
-      updateMessage: data['update_message'] as String? ?? '',
-    );
+
+    // ── New platform-specific structure ──────────────────────────────────────
+    if (data.containsKey('android') && data['android'] is Map) {
+      return AppSettings(
+        android: PlatformRelease.fromMap(
+            Map<String, dynamic>.from(data['android'] as Map)),
+        ios: data.containsKey('ios') && data['ios'] is Map
+            ? PlatformRelease.fromMap(
+                Map<String, dynamic>.from(data['ios'] as Map))
+            : const PlatformRelease(),
+        windows: data.containsKey('windows') && data['windows'] is Map
+            ? PlatformRelease.fromMap(
+                Map<String, dynamic>.from(data['windows'] as Map))
+            : const PlatformRelease(),
+      );
+    }
+
+    // ── Legacy flat structure → migrate to Android as fallback ────────────────
+    return AppSettings.fromLegacy(data);
   }
 
   @override
@@ -1120,17 +1136,14 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final admin = await _requireAdmin();
     _requirePermission(admin, AdminPermissions.settingsWrite);
 
+    // Write all three platforms atomically.
     await _firestore
         .collection(AdminConstants.systemSettingsCollection)
         .doc(AdminConstants.appVersionDoc)
         .set({
-      'android_download_url': settings.androidDownloadUrl,
-      'windows_download_url': settings.windowsDownloadUrl,
-      'ios_download_url': settings.iosDownloadUrl,
-      'latest_version': settings.latestVersion,
-      'version_name': settings.versionName,
-      'force_update': settings.forceUpdate,
-      'update_message': settings.updateMessage,
+      'android': settings.android.toMap(),
+      'ios': settings.ios.toMap(),
+      'windows': settings.windows.toMap(),
       'updatedAt': FieldValue.serverTimestamp(),
       'updatedBy': admin.uid,
     }, SetOptions(merge: true));
@@ -1139,9 +1152,39 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       admin: admin,
       actionType: 'UPDATE_SETTINGS',
       metadata: {
-        'latest_version': settings.latestVersion,
-        'version_name': settings.versionName,
-        'force_update': settings.forceUpdate,
+        'android_version': settings.android.versionName,
+        'ios_version': settings.ios.versionName,
+        'windows_version': settings.windows.versionName,
+      },
+    );
+  }
+
+  @override
+  Future<void> updatePlatformRelease(
+    ReleasePlatform platform,
+    PlatformRelease release,
+  ) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.settingsWrite);
+
+    final key = platform.name; // 'android' | 'ios' | 'windows'
+    await _firestore
+        .collection(AdminConstants.systemSettingsCollection)
+        .doc(AdminConstants.appVersionDoc)
+        .set({
+      key: release.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'updatedBy': admin.uid,
+    }, SetOptions(merge: true));
+
+    await _audit.log(
+      admin: admin,
+      actionType: 'UPDATE_${key.toUpperCase()}_RELEASE',
+      metadata: {
+        'platform': key,
+        'versionName': release.versionName,
+        'buildNumber': release.buildNumber,
+        'forceUpdate': release.forceUpdate,
       },
     );
   }

@@ -216,6 +216,13 @@ class AdminRepositoryImpl implements AdminRepository {
       _guard(() => _remote.updateAppSettings(settings));
 
   @override
+  Future<Either<Failure, void>> updatePlatformRelease(
+    ReleasePlatform platform,
+    PlatformRelease release,
+  ) =>
+      _guard(() => _remote.updatePlatformRelease(platform, release));
+
+  @override
   Future<Either<Failure, void>> setupInitialAdmin(String email, String name) =>
       _guard(() => _remote.setupInitialAdmin(email, name));
 

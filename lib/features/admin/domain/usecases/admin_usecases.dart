@@ -361,6 +361,21 @@ class UpdateAppSettingsUseCase extends BaseUseCase<void, AppSettings> {
       _repo.updateAppSettings(params);
 }
 
+class UpdatePlatformReleaseUseCase
+    extends BaseUseCase<void, UpdatePlatformReleaseParams> {
+  UpdatePlatformReleaseUseCase(this._repo);
+  final AdminRepository _repo;
+  @override
+  Future<Either<Failure, void>> call(UpdatePlatformReleaseParams params) =>
+      _repo.updatePlatformRelease(params.platform, params.release);
+}
+
+class UpdatePlatformReleaseParams {
+  final ReleasePlatform platform;
+  final PlatformRelease release;
+  UpdatePlatformReleaseParams({required this.platform, required this.release});
+}
+
 class SendNotificationUseCase extends BaseUseCase<void, NotificationParams> {
   SendNotificationUseCase(this._repo);
   final AdminRepository _repo;

@@ -133,5 +133,20 @@
   "platform_type_desktop": "كمبيوتر",
   "platform_type_both": "كلاهما",
   "phone_copied": "تم نسخ رقم الهاتف",
-  "admin_not_found": "غير موجود"
+  "admin_not_found": "غير موجود",
+  "admin_build_number": "رقم البناء (رمز الإصدار)",
+  "admin_build_number_hint": "مثال: 12",
+  "admin_store_url": "رابط المتجر / رابط التحميل",
+  "admin_store_url_hint": "https://...",
+  "admin_update_title": "عنوان التحديث",
+  "admin_update_title_hint": "مثال: يتوفر إصدار جديد!",
+  "admin_release_notes": "ملاحظات الإصدار",
+  "admin_release_notes_hint": "اكتب الجديد في هذا الإصدار...",
+  "admin_save_android": "حفظ إعدادات Android",
+  "admin_save_ios": "حفظ إعدادات iOS",
+  "admin_save_windows": "حفظ إعدادات Windows",
+  "admin_saving": "جاري الحفظ...",
+  "admin_settings_saved_android": "تم حفظ إعدادات Android",
+  "admin_settings_saved_ios": "تم حفظ إعدادات iOS",
+  "admin_settings_saved_windows": "تم حفظ إعدادات Windows"
 }

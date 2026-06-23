@@ -63,6 +63,7 @@ void registerAdminDependencies() {
   sl.registerLazySingleton(() => GetUserSessionsUseCase(sl()));
   sl.registerLazySingleton(() => GetAppSettingsUseCase(sl()));
   sl.registerLazySingleton(() => UpdateAppSettingsUseCase(sl()));
+  sl.registerLazySingleton(() => UpdatePlatformReleaseUseCase(sl()));
   sl.registerLazySingleton(() => SendNotificationUseCase(sl()));
   sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
   sl.registerLazySingleton(() => SetupInitialAdminUseCase(sl()));
@@ -111,5 +112,6 @@ void registerAdminDependencies() {
   sl.registerFactory(() => SettingsCubit(
         getSettings: sl(),
         updateSettings: sl(),
+        updatePlatformRelease: sl(),
       ));
 }
