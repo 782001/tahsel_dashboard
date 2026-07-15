@@ -15,7 +15,7 @@ enum ReleasePlatform { android, ios, windows }
 abstract class AdminRepository {
   Future<Either<Failure, AdminUser>> signIn(String email, String password);
   Future<Either<Failure, void>> signOut();
-  Future<Either<Failure, AdminUser>> verifySession();
+    Future<Either<Failure, AdminUser>> verifySession();
   Future<Either<Failure, DashboardStats>> getDashboardStats();
   Future<Either<Failure, PaginatedResult<AppUser>>> getUsers({
     int limit,

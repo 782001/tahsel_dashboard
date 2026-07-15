@@ -838,6 +838,47 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     await _stats.refresh();
   }
 
+  Future<void> _logTahselOperation({
+    required Map<String, dynamic> userData,
+    required int days,
+  }) async {
+    try {
+      final platformType = userData['platformType'] as String? ?? 'mobile';
+      final isBoth = platformType.toLowerCase() == 'both';
+      
+      final double pricePer30Days = isBoth ? 175.0 : 125.0;
+      final double totalAmount = (days / 30) * pricePer30Days;
+      
+      final String ownerUid = 'Nz4Fx2AQUxgTZQSehXWOpuQQEcz1';
+      final String customerName = userData['fullName'] as String? ?? 'Unknown Customer';
+      final String? phoneNumber = userData['phoneNumber'] as String?;
+      
+      final docRef = _firestore
+          .collection('users')
+          .doc(ownerUid)
+          .collection('operations')
+          .doc();
+          
+      await docRef.set({
+        'id': docRef.id,
+        'uid': ownerUid,
+        'type': 'renew_subscription',
+        'subType': null,
+        'customerName': customerName,
+        'phoneNumber': phoneNumber,
+        'productName': 'تجديد اشتراك',
+        'totalAmount': totalAmount,
+        'paidAmount': totalAmount,
+        'remainingDebt': 0.0,
+        'timestamp': FieldValue.serverTimestamp(),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      // Ignore errors so we don't break the main renewal flow
+      print('Failed to log Tahsel operation: $e');
+    }
+  }
+
   @override
   Future<void> renewSubscription(String uid, int days) async {
     final admin = await _requireAdmin();
@@ -882,6 +923,9 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       actionType: 'RENEW_SUBSCRIPTION',
       metadata: {'days': days},
     );
+
+    // Track the revenue for the dashboard owner inside the Tahsel App
+    await _logTahselOperation(userData: data, days: days);
   }
 
   @override
@@ -923,6 +967,9 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       actionType: 'EXTEND_SUBSCRIPTION',
       metadata: {'days': days},
     );
+
+    // Track the revenue for the dashboard owner inside the Tahsel App
+    await _logTahselOperation(userData: data, days: days);
   }
 
   @override
