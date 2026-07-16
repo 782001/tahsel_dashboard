@@ -175,6 +175,13 @@ class _UserTile extends StatelessWidget {
               user.email,
               style: TextStyles.font14Weight400RightAligned(),
             ),
+            if (user.projectName.isNotEmpty) ...[
+              SizedBox(height: 4.h),
+              TextWidget(
+                '${'admin_project_name'.tr()}: ${user.projectName}',
+                style: TextStyles.font14Weight400RightAligned(),
+              ),
+            ],
             SizedBox(height: 4.h),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -185,7 +192,7 @@ class _UserTile extends StatelessWidget {
                   StatusBadge(statusKey: user.subscriptionStatus),
                   SizedBox(width: 8.w),
                   StatusBadge(
-                    statusKey: 'platform_type_${user.platformType ?? 'mobile'}',
+                    statusKey: 'platform_type_${user.platformType}',
                   ),
                 ],
               ),

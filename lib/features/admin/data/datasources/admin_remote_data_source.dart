@@ -538,6 +538,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final password = data['password'] as String;
     final fullName = (data['fullName'] as String).trim();
     final phoneNumber = data['phoneNumber'] as String?;
+    final projectName = data['projectName'] as String?;
     final days = data['subscriptionDays'] as int? ?? 30;
 
     final credential = await _authService.createAuthUser(
@@ -561,6 +562,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       'subscriptionStart': now,
       'userType': data['userType'] ?? 'cafe',
       'platformType': data['platformType']??"mobile",
+      'projectName': projectName ?? '',
       'subscriptionEnd': endDate,
       'gracePeriodEnd': Timestamp.fromDate(graceEndDate),
       'loginAllowed': true,
@@ -578,6 +580,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
         fullName: fullName,
         email: email,
         phoneNumber: phoneNumber,
+        projectName: projectName ?? '',
       ),
       'stats': {
         'customers': 0,
@@ -625,6 +628,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       fullName: updates['fullName'] as String? ?? current['fullName'] as String?,
       email: updates['email'] as String? ?? current['email'] as String?,
       phoneNumber: updates['phoneNumber'] as String? ?? current['phoneNumber'] as String?,
+      projectName: updates['projectName'] as String? ?? current['projectName'] as String?,
     );
 
     await _userRef(uid).update(updates);

@@ -148,5 +148,6 @@
   "admin_saving": "Saving...",
   "admin_settings_saved_android": "Android settings saved",
   "admin_settings_saved_ios": "iOS settings saved",
-  "admin_settings_saved_windows": "Windows settings saved"
+  "admin_settings_saved_windows": "Windows settings saved",
+  "admin_project_name": "Project Name"
 }

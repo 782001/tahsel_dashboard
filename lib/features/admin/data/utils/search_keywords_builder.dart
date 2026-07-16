@@ -6,6 +6,7 @@ class SearchKeywordsBuilder {
     String? fullName,
     String? email,
     String? phoneNumber,
+    String? projectName,
   }) {
     final keywords = <String>{};
     if (uid != null && uid.isNotEmpty) keywords.add(uid.toLowerCase());
@@ -16,6 +17,13 @@ class SearchKeywordsBuilder {
     if (fullName != null && fullName.isNotEmpty) {
       keywords.add(fullName.toLowerCase());
       for (final part in fullName.split(' ')) {
+        final trimmed = part.trim().toLowerCase();
+        if (trimmed.isNotEmpty) keywords.add(trimmed);
+      }
+    }
+    if (projectName != null && projectName.isNotEmpty) {
+      keywords.add(projectName.toLowerCase());
+      for (final part in projectName.split(' ')) {
         final trimmed = part.trim().toLowerCase();
         if (trimmed.isNotEmpty) keywords.add(trimmed);
       }

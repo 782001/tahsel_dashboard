@@ -149,6 +149,7 @@ class CreateUserParams {
   final String password;
   final String fullName;
   final String? phoneNumber;
+  final String? projectName;
   final int subscriptionDays;
   final String userType;
   final String platformType;
@@ -158,6 +159,7 @@ class CreateUserParams {
     required this.password,
     required this.fullName,
     this.phoneNumber,
+    this.projectName,
     this.subscriptionDays = 30,
     this.userType = 'cafe',
     this.platformType = 'mobile',
@@ -168,6 +170,7 @@ class CreateUserParams {
         'password': password,
         'fullName': fullName,
         if (phoneNumber != null) 'phoneNumber': phoneNumber,
+        if (projectName != null) 'projectName': projectName,
         'subscriptionDays': subscriptionDays,
         'userType': userType,
         'platformType': platformType,

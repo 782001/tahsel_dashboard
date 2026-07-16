@@ -23,6 +23,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _password = TextEditingController();
+  final _projectName = TextEditingController();
   int _days = 30;
   String _userType = 'cafe';
   String _platformType = 'mobile';
@@ -34,6 +35,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
     _email.dispose();
     _phone.dispose();
     _password.dispose();
+    _projectName.dispose();
     super.dispose();
   }
 
@@ -68,9 +70,14 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                 textInputType: TextInputType.visiblePassword,
                 obscureText: true,
               ),
+              AuthTextFormField(
+                label: 'admin_project_name'.tr(),
+                controller: _projectName,
+                textInputType: TextInputType.name,
+              ),
               SizedBox(height: 12.h),
               DropdownButtonFormField<String>(
-                value: _userType,
+                initialValue: _userType,
                 decoration: InputDecoration(labelText: 'admin_user_type'.tr()),
                 items: [
                   DropdownMenuItem(
@@ -86,7 +93,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
               ),
               SizedBox(height: 12.h),
               DropdownButtonFormField<String>(
-                value: _platformType,
+                initialValue: _platformType,
                 decoration: InputDecoration(labelText: 'admin_platform_type'.tr()),
                 items: [
                   DropdownMenuItem(
@@ -106,7 +113,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
               ),
               SizedBox(height: 12.h),
               DropdownButtonFormField<int>(
-                value: _days,
+                initialValue: _days,
                 decoration: InputDecoration(labelText: 'admin_subscription_days'.tr()),
                 items: [
                   ...AdminConstants.subscriptionPresets.map(
@@ -137,12 +144,14 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
               days = custom;
             }
             setState(() => _loading = true);
+            if (!context.mounted) return;
             final ok = await context.read<UsersCubit>().createUser(
                   CreateUserParams(
                     email: _email.text.trim(),
                     password: _password.text,
                     fullName: _name.text.trim(),
                     phoneNumber: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
+                    projectName: _projectName.text.trim().isEmpty ? null : _projectName.text.trim(),
                     subscriptionDays: days,
                     userType: _userType,
                     platformType: _platformType,

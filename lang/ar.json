@@ -148,5 +148,6 @@
   "admin_saving": "جاري الحفظ...",
   "admin_settings_saved_android": "تم حفظ إعدادات Android",
   "admin_settings_saved_ios": "تم حفظ إعدادات iOS",
-  "admin_settings_saved_windows": "تم حفظ إعدادات Windows"
+  "admin_settings_saved_windows": "تم حفظ إعدادات Windows",
+  "admin_project_name": "اسم المشروع"
 }
