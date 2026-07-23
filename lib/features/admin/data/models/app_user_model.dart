@@ -20,6 +20,7 @@ class AppUserModel extends AppUser {
     super.userType, 
     super.platformType,
     super.projectName,
+    super.isVip,
   });
 
   factory AppUserModel.fromFirestore(DocumentSnapshot doc) {
@@ -42,6 +43,7 @@ class AppUserModel extends AppUser {
       userType: data['userType']??'cafe',
       platformType: data['platformType']??'mobile', 
       projectName: data['projectName'] ?? '',
+      isVip: data['isVip'] ?? false,
       stats: UserStats(
         customers: statsMap['customers'] ?? 0,
         debts: statsMap['debts'] ?? 0,

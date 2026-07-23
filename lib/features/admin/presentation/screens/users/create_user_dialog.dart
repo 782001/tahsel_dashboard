@@ -27,6 +27,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
   int _days = 30;
   String _userType = 'cafe';
   String _platformType = 'mobile';
+  bool _isVip = false;
   bool _loading = false;
 
   @override
@@ -123,6 +124,15 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                 ],
                 onChanged: (v) => setState(() => _days = v ?? 30),
               ),
+              SizedBox(height: 12.h),
+              SwitchListTile(
+                title: const Text('VIP Account'),
+                subtitle: Text(_isVip ? '☑ Enabled' : '☐ Disabled'),
+                secondary: const Icon(Icons.workspace_premium_rounded, color: Colors.amber),
+                value: _isVip,
+                activeThumbColor: Colors.amber,
+                onChanged: (val) => setState(() => _isVip = val),
+              ),
             ],
           ),
         ),
@@ -155,6 +165,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                     subscriptionDays: days,
                     userType: _userType,
                     platformType: _platformType,
+                    isVip: _isVip,
                   ),
                 );
             setState(() => _loading = false);

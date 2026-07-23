@@ -39,6 +39,7 @@ class AppUser extends Equatable {
   final String userType;  
   final String platformType;
   final String projectName;
+  final bool isVip;
 
   const AppUser({
     required this.uid,
@@ -58,6 +59,7 @@ class AppUser extends Equatable {
     this.userType = 'cafe',
     this.platformType = 'mobile',
     this.projectName = '',
+    this.isVip = false,
   });
 
   int get daysRemaining {
@@ -97,5 +99,6 @@ class AppUser extends Equatable {
         userType,
         platformType,
         projectName,
+        isVip,
       ];
 }

@@ -75,6 +75,48 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             ),
                           ),
                         ),
+                        if (user.isVip) ...[
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                              ),
+                              borderRadius: BorderRadius.circular(16.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFFD700)
+                                      .withValues(alpha: 0.4),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.workspace_premium_rounded,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  'VIP',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                        ],
                         StatusBadge(statusKey: user.accountStatus),
                       ],
                     ),
@@ -119,6 +161,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           : user.platformType == 'both'
                           ? 'platform_type_both'.tr()
                           : 'platform_type_mobile'.tr(),
+                    ),
+                    _infoRow(
+                      'VIP Account',
+                      user.isVip ? '☑ Enabled (VIP)' : '☐ Disabled (Standard)',
                     ),
                     _infoRow(
                       'admin_created'.tr(),
@@ -508,6 +554,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     final phoneController = TextEditingController(text: user.phoneNumber);
     String selectedUserType = user.userType;
     String selectedPlatformType = user.platformType;
+    bool selectedIsVip = user.isVip;
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -568,6 +615,15 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 onChanged: (v) =>
                     setState(() => selectedPlatformType = v ?? 'mobile'),
               ),
+              SizedBox(height: 12.h),
+              SwitchListTile(
+                title: const Text('VIP Account'),
+                subtitle: Text(selectedIsVip ? '☑ Enabled' : '☐ Disabled'),
+                secondary: const Icon(Icons.workspace_premium_rounded, color: Colors.amber),
+                value: selectedIsVip,
+                activeThumbColor: Colors.amber,
+                onChanged: (val) => setState(() => selectedIsVip = val),
+              ),
             ],
           ),
           actions: [
@@ -593,6 +649,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           phoneNumber: phoneController.text.trim(),
           userType: selectedUserType,
           platformType: selectedPlatformType,
+          isVip: selectedIsVip,
         ),
       );
       nameController.dispose();
