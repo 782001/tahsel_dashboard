@@ -851,8 +851,11 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     try {
       final platformType = userData['platformType'] as String? ?? 'mobile';
       final isBoth = platformType.toLowerCase() == 'both';
+      final bool isVip = (userData['isVip'] as bool?) ?? false;
       
-      final double pricePer30Days = isBoth ? 175.0 : 125.0;
+      final double pricePer30Days = isVip
+          ? (isBoth ? 300.0 : 250.0)
+          : (isBoth ? 175.0 : 125.0);
       final double totalAmount = (days / 30) * pricePer30Days;
       
       final String ownerUid = 'Nz4Fx2AQUxgTZQSehXWOpuQQEcz1';
