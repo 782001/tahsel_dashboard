@@ -844,77 +844,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     await _stats.refresh();
   }
 
-  Future<void> _logTahselOperation({
-    required Map<String, dynamic> userData,
-    required int days,
-  }) async {
-    try {
-      final platformType = userData['platformType'] as String? ?? 'mobile';
-      final isBoth = platformType.toLowerCase() == 'both';
-      final bool isVip = (userData['isVip'] as bool?) ?? false;
-      
-      final double pricePer30Days = isVip
-          ? (isBoth ? 300.0 : 250.0)
-          : (isBoth ? 175.0 : 125.0);
-      final double totalAmount = (days / 30) * pricePer30Days;
-      
-      final String ownerUid = 'Nz4Fx2AQUxgTZQSehXWOpuQQEcz1';
-      final String customerName = userData['fullName'] as String? ?? 'Unknown Customer';
-      final String? phoneNumber = userData['phoneNumber'] as String?;
-      
-      final userRef = _firestore.collection('users').doc(ownerUid);
-      final docRef = userRef.collection('operations').doc();
-          
-      final batch = _firestore.batch();
-      
-      batch.set(docRef, {
-        'id': docRef.id,
-        'uid': ownerUid,
-        'type': 'shop', // Set to shop so it contributes to total and is visible. Or just 'subscription'
-        'subType': null,
-        'customerName': customerName,
-        'phoneNumber': phoneNumber,
-        'productName': 'تجديد اشتراك',
-        'totalAmount': totalAmount,
-        'paidAmount': totalAmount,
-        'remainingDebt': 0.0,
-        'timestamp': FieldValue.serverTimestamp(),
-        'lastUpdatedAt': FieldValue.serverTimestamp(),
-      });
 
-      final now = DateTime.now();
-      final String yyyy = now.year.toString();
-      final String mm = now.month.toString().padLeft(2, '0');
-      final String dd = now.day.toString().padLeft(2, '0');
-      
-      // Calculate ISO 8601 week number safely without intl (using standard Date calculation)
-      final int dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
-      final int woy = ((dayOfYear - now.weekday + 10) / 7).floor();
-      final String ww = woy.toString().padLeft(2, '0');
-
-      final summaryKeys = [
-        '$yyyy-$mm-$dd',
-        '${yyyy}_W$ww',
-        '$yyyy-$mm',
-        'all_time',
-      ];
-
-      for (final key in summaryKeys) {
-        final summaryRef = userRef.collection('summaries').doc(key);
-        batch.set(summaryRef, {
-          'totalIncome': FieldValue.increment(totalAmount),
-          'cafeIncome': FieldValue.increment(totalAmount),
-          'transactionCount': FieldValue.increment(1),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      }
-
-      await batch.commit();
-    } catch (e) {
-      // Ignore errors so we don't break the main renewal flow
-      print('Failed to log Tahsel operation: $e');
-    }
-  }
 
   @override
   Future<void> renewSubscription(String uid, int days) async {
@@ -960,9 +890,6 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       actionType: 'RENEW_SUBSCRIPTION',
       metadata: {'days': days},
     );
-
-    // Track the revenue for the dashboard owner inside the Tahsel App
-    await _logTahselOperation(userData: data, days: days);
   }
 
   @override
@@ -1004,9 +931,6 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       actionType: 'EXTEND_SUBSCRIPTION',
       metadata: {'days': days},
     );
-
-    // Track the revenue for the dashboard owner inside the Tahsel App
-    await _logTahselOperation(userData: data, days: days);
   }
 
   @override
