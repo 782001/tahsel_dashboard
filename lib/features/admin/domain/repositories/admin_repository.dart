@@ -9,6 +9,7 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/broadcast_notifi
 import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 
 enum ReleasePlatform { android, ios, windows }
 
@@ -45,6 +46,7 @@ abstract class AdminRepository {
     String? cursor,
   });
   Future<Either<Failure, List<UserSession>>> getUserSessions(String uid);
+  Future<Either<Failure, List<TenantEmployee>>> getTenantEmployees(String ownerUid);
   Future<Either<Failure, AppSettings>> getAppSettings();
   Future<Either<Failure, PaginatedResult<BroadcastNotification>>> getNotifications({
     int limit,

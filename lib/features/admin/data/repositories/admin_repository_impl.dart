@@ -12,12 +12,18 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/broadcast_notifi
 import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart';
 
 class AdminRepositoryImpl implements AdminRepository {
   AdminRepositoryImpl(this._remote);
 
   final AdminRemoteDataSource _remote;
+
+  @override
+  Future<Either<Failure, List<TenantEmployee>>> getTenantEmployees(
+          String ownerUid) =>
+      _guard(() => _remote.getTenantEmployees(ownerUid));
 
   Future<Either<Failure, T>> _guard<T>(Future<T> Function() action) async {
     try {

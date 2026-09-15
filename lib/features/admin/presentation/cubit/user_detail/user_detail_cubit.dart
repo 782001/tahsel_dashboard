@@ -7,6 +7,7 @@ class UserDetailCubit extends Cubit<UserDetailState> {
     required GetUserByIdUseCase getUser,
     required GetUserNotesUseCase getNotes,
     required GetUserSessionsUseCase getSessions,
+    required GetTenantEmployeesUseCase getEmployees,
     required UpdateUserUseCase updateUser,
     required DeleteUserUseCase deleteUser,
     required DisableUserUseCase disableUser,
@@ -19,6 +20,7 @@ class UserDetailCubit extends Cubit<UserDetailState> {
   })  : _getUser = getUser,
         _getNotes = getNotes,
         _getSessions = getSessions,
+        _getEmployees = getEmployees,
         _updateUser = updateUser,
         _deleteUser = deleteUser,
         _disableUser = disableUser,
@@ -33,6 +35,7 @@ class UserDetailCubit extends Cubit<UserDetailState> {
   final GetUserByIdUseCase _getUser;
   final GetUserNotesUseCase _getNotes;
   final GetUserSessionsUseCase _getSessions;
+  final GetTenantEmployeesUseCase _getEmployees;
   final UpdateUserUseCase _updateUser;
   final DeleteUserUseCase _deleteUser;
   final DisableUserUseCase _disableUser;
@@ -54,6 +57,9 @@ class UserDetailCubit extends Cubit<UserDetailState> {
       (user) async {
         final notesResult = await _getNotes(NotesParams(uid: uid));
         final sessionsResult = await _getSessions(uid);
+        final employeesResult = await _getEmployees(uid);
+        final employees = employeesResult.getOrElse(() => []);
+
         notesResult.fold(
           (f) => emit(UserDetailError(f.message)),
           (notesPage) {
@@ -63,6 +69,7 @@ class UserDetailCubit extends Cubit<UserDetailState> {
                 user: user,
                 notes: notesPage.items,
                 sessions: sessions,
+                employees: employees,
                 notesHasMore: notesPage.hasMore,
                 notesCursor: notesPage.lastCursor,
               )),

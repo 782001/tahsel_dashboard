@@ -14,6 +14,7 @@ class AdminConstants {
   static const String adminsCollection = 'admins';
   static const String notesSubcollection = 'notes';
   static const String sessionsSubcollection = 'sessions';
+  static const String appEmployeesSubcollection = 'app_employees';
 
   static const List<int> subscriptionPresets = [30, 60, 90];
   static const List<int> expirationWindows = [7, 14, 30];

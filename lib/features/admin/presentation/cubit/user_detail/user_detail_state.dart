@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/app_user.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
 
@@ -17,6 +18,7 @@ class UserDetailLoaded extends UserDetailState {
   final AppUser user;
   final List<UserNote> notes;
   final List<UserSession> sessions;
+  final List<TenantEmployee> employees;
   final bool notesHasMore;
   final String? notesCursor;
 
@@ -24,6 +26,7 @@ class UserDetailLoaded extends UserDetailState {
     required this.user,
     this.notes = const [],
     this.sessions = const [],
+    this.employees = const [],
     this.notesHasMore = false,
     this.notesCursor,
   });
@@ -32,6 +35,7 @@ class UserDetailLoaded extends UserDetailState {
     AppUser? user,
     List<UserNote>? notes,
     List<UserSession>? sessions,
+    List<TenantEmployee>? employees,
     bool? notesHasMore,
     String? notesCursor,
   }) =>
@@ -39,12 +43,13 @@ class UserDetailLoaded extends UserDetailState {
         user: user ?? this.user,
         notes: notes ?? this.notes,
         sessions: sessions ?? this.sessions,
+        employees: employees ?? this.employees,
         notesHasMore: notesHasMore ?? this.notesHasMore,
         notesCursor: notesCursor ?? this.notesCursor,
       );
 
   @override
-  List<Object?> get props => [user, notes, sessions, notesHasMore, notesCursor];
+  List<Object?> get props => [user, notes, sessions, employees, notesHasMore, notesCursor];
 }
 
 class UserDetailError extends UserDetailState {

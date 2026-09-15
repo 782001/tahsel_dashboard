@@ -6,6 +6,7 @@ import 'package:tahsel_dashboard/core/models/paginated_result.dart';
 import 'package:tahsel_dashboard/features/admin/data/models/app_user_model.dart';
 import 'package:tahsel_dashboard/features/admin/data/models/audit_log_model.dart';
 import 'package:tahsel_dashboard/features/admin/data/models/dashboard_stats_model.dart';
+import 'package:tahsel_dashboard/features/admin/data/models/tenant_employee_model.dart';
 import 'package:tahsel_dashboard/features/admin/data/services/admin_audit_service.dart';
 import 'package:tahsel_dashboard/features/admin/data/services/admin_auth_service.dart';
 import 'package:tahsel_dashboard/features/admin/data/services/admin_stats_service.dart';
@@ -20,6 +21,7 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.
 import 'package:tahsel_dashboard/features/admin/domain/services/user_access_policy.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart'
     show ReleasePlatform;
 
@@ -56,6 +58,7 @@ abstract class AdminRemoteDataSource {
     String? cursor,
   });
   Future<List<UserSession>> getUserSessions(String uid);
+  Future<List<TenantEmployee>> getTenantEmployees(String ownerUid);
   Future<AppSettings> getAppSettings();
   Future<PaginatedResult<BroadcastNotification>> getNotifications({
     int limit,
@@ -464,6 +467,19 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
   }
 
   @override
+  Future<List<TenantEmployee>> getTenantEmployees(String ownerUid) async {
+    try {
+      final snap = await _userRef(ownerUid)
+          .collection(AdminConstants.appEmployeesSubcollection)
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snap.docs.map(TenantEmployeeModel.fromFirestore).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  @override
   Future<AppSettings> getAppSettings() async {
     final doc = await _firestore
         .collection(AdminConstants.systemSettingsCollection)
@@ -557,13 +573,18 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       'email': email.toLowerCase(),
       'phoneNumber': phoneNumber ?? '',
       'accountStatus': 'active',
+      'role': 'owner',
       'subscriptionStatus': 'active',
       'subscriptionSuspended': false,
       'subscriptionStart': now,
       'userType': data['userType'] ?? 'cafe',
-      'platformType': data['platformType']??"mobile",
+      'platformType': data['platformType'] ?? "mobile",
       'isVip': data['isVip'] ?? false,
       'projectName': projectName ?? '',
+      'crn': data['crn'] ?? '',
+      'vat': data['vat'] ?? '',
+      'taxRate': data['taxRate'],
+      'address': data['address'] ?? '',
       'subscriptionEnd': endDate,
       'gracePeriodEnd': Timestamp.fromDate(graceEndDate),
       'loginAllowed': true,

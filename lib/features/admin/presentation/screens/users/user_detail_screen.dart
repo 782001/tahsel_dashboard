@@ -16,6 +16,7 @@ import 'package:tahsel_dashboard/features/admin/presentation/widgets/status_badg
 import 'package:tahsel_dashboard/shared/widgets/buttons/custom_button.dart';
 import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
 import 'package:tahsel_dashboard/shared/widgets/toast/custom_toast.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/widgets/employee_permissions_dialog.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final String uid;
@@ -167,6 +168,20 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       user.isVip ? '☑ Enabled (VIP)' : '☐ Disabled (Standard)',
                     ),
                     _infoRow(
+                      'admin_role'.tr(),
+                      user.isEmployee
+                          ? 'role_employee'.tr()
+                          : 'role_owner'.tr(),
+                    ),
+                    if (user.crn != null && user.crn!.isNotEmpty)
+                      _infoRow('admin_crn'.tr(), user.crn!),
+                    if (user.vat != null && user.vat!.isNotEmpty)
+                      _infoRow('admin_vat'.tr(), user.vat!),
+                    if (user.taxRate != null)
+                      _infoRow('admin_tax_rate'.tr(), '${user.taxRate}%'),
+                    if (user.address != null && user.address!.isNotEmpty)
+                      _infoRow('admin_address'.tr(), user.address!),
+                    _infoRow(
                       'admin_created'.tr(),
                       user.createdAt != null ? df.format(user.createdAt!) : '-',
                     ),
@@ -251,6 +266,102 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     ),
                   ]),
                   _section('admin_usage_stats'.tr(), [_statsGrid(user)]),
+                  _section('admin_team_members'.tr(), [
+                    if (state.employees.isEmpty)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        child: TextWidget('admin_no_employees_yet'.tr()),
+                      )
+                    else
+                      ...state.employees.map(
+                        (emp) => Card(
+                          margin: EdgeInsets.only(bottom: 8.h),
+                          color: AppColors.scafoldBackGround,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                            side: BorderSide(
+                              color: AppColors.primaryColor.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(12.w),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 18.r,
+                                  backgroundColor: AppColors.primaryColor.withValues(alpha: 0.1),
+                                  child: Text(
+                                    emp.name.isNotEmpty ? emp.name[0].toUpperCase() : '؟',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryColor,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Wrap(
+                                        spacing: 8.w,
+                                        runSpacing: 4.h,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        children: [
+                                          TextWidget(
+                                            emp.name,
+                                            style: TextStyles.font14Weight400RightAligned().copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 8.w,
+                                              vertical: 2.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryColor.withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(6.r),
+                                            ),
+                                            child: TextWidget(
+                                              emp.rolePreset,
+                                              style: TextStyle(
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                          StatusBadge(statusKey: emp.accountStatus),
+                                        ],
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      TextWidget(
+                                        emp.email,
+                                        style: TextStyles.font14Weight400RightAligned().copyWith(
+                                          color: AppColors.subTitleColor,
+                                          fontSize: 12.sp,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: () => EmployeePermissionsDialog.show(context, emp),
+                                  icon: const Icon(Icons.shield_outlined, size: 16),
+                                  label: TextWidget(
+                                    '${emp.permissions.length} ${'admin_permissions_count'.tr()}',
+                                    style: TextStyle(fontSize: 12.sp),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ]),
                   _section('admin_sessions'.tr(), [
                     if (state.sessions.isEmpty)
                       TextWidget('no_data'.tr())

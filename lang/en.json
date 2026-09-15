@@ -148,6 +148,17 @@
   "admin_saving": "Saving...",
   "admin_settings_saved_android": "Android settings saved",
   "admin_settings_saved_ios": "iOS settings saved",
-  "admin_settings_saved_windows": "Windows settings saved",
-  "admin_project_name": "Project Name"
+  "admin_project_name": "Project Name",
+  "admin_role": "System Role",
+  "role_owner": "Owner",
+  "role_employee": "Employee",
+  "admin_crn": "Commercial Reg (CRN)",
+  "admin_vat": "Tax Number (VAT)",
+  "admin_tax_rate": "Tax Rate",
+  "admin_address": "Address",
+  "admin_team_members": "Team Members & Employees",
+  "admin_no_employees_yet": "No employees registered for this business yet",
+  "admin_permissions_count": "permissions",
+  "badge_employee": "Employee Account",
+  "employee_belongs_to": "Belongs to Store"
 }

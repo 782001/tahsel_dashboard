@@ -40,6 +40,12 @@ class AppUser extends Equatable {
   final String platformType;
   final String projectName;
   final bool isVip;
+  final String role;
+  final String? ownerUid;
+  final String? crn;
+  final String? vat;
+  final double? taxRate;
+  final String? address;
 
   const AppUser({
     required this.uid,
@@ -60,7 +66,16 @@ class AppUser extends Equatable {
     this.platformType = 'mobile',
     this.projectName = '',
     this.isVip = false,
+    this.role = 'owner',
+    this.ownerUid,
+    this.crn,
+    this.vat,
+    this.taxRate,
+    this.address,
   });
+
+  bool get isEmployee =>
+      role == 'employee' || (ownerUid != null && ownerUid!.isNotEmpty);
 
   int get daysRemaining {
     if (subscriptionEnd == null) return 0;
@@ -100,5 +115,11 @@ class AppUser extends Equatable {
         platformType,
         projectName,
         isVip,
+        role,
+        ownerUid,
+        crn,
+        vat,
+        taxRate,
+        address,
       ];
 }

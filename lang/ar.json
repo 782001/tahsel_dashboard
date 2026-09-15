@@ -148,6 +148,17 @@
   "admin_saving": "جاري الحفظ...",
   "admin_settings_saved_android": "تم حفظ إعدادات Android",
   "admin_settings_saved_ios": "تم حفظ إعدادات iOS",
-  "admin_settings_saved_windows": "تم حفظ إعدادات Windows",
-  "admin_project_name": "اسم المشروع"
+  "admin_project_name": "اسم المشروع",
+  "admin_role": "الدور بالنظام",
+  "role_owner": "مالك المنشأة (Owner)",
+  "role_employee": "موظف فرعي (Employee)",
+  "admin_crn": "السجل التجاري (CRN)",
+  "admin_vat": "الرقم الضريبي (VAT)",
+  "admin_tax_rate": "نسبة الضريبة",
+  "admin_address": "العنوان",
+  "admin_team_members": "فريق العمل والموظفون",
+  "admin_no_employees_yet": "لا يوجد موظفون مسجلون لدى هذه المنشأة حالياً",
+  "admin_permissions_count": "صلاحية",
+  "badge_employee": "حساب موظف",
+  "employee_belongs_to": "تابع لمتجر"
 }

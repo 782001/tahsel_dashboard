@@ -62,7 +62,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
               SizedBox(height: 8.h),
               DropdownButtonFormField<String>(
-                value: _targetType,
+                initialValue: _targetType,
                 decoration: InputDecoration(
                   labelText: 'admin_target_type'.tr(),
                 ),

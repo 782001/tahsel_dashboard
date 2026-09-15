@@ -10,6 +10,7 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/broadcast_notifi
 import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart';
 
 class SignInAdminUseCase extends BaseUseCase<AdminUser, SignInParams> {
@@ -154,6 +155,10 @@ class CreateUserParams {
   final String userType;
   final String platformType;
   final bool isVip;
+  final String? crn;
+  final String? vat;
+  final double? taxRate;
+  final String? address;
 
   CreateUserParams({
     required this.email,
@@ -165,6 +170,10 @@ class CreateUserParams {
     this.userType = 'cafe',
     this.platformType = 'mobile',
     this.isVip = false,
+    this.crn,
+    this.vat,
+    this.taxRate,
+    this.address,
   });
 
   Map<String, dynamic> toMap() => {
@@ -177,6 +186,10 @@ class CreateUserParams {
         'userType': userType,
         'platformType': platformType,
         'isVip': isVip,
+        if (crn != null) 'crn': crn,
+        if (vat != null) 'vat': vat,
+        if (taxRate != null) 'taxRate': taxRate,
+        if (address != null) 'address': address,
       };
 }
 
@@ -196,6 +209,10 @@ class UpdateUserParams {
   final String? userType;
   final String? platformType;
   final bool? isVip;
+  final String? crn;
+  final String? vat;
+  final double? taxRate;
+  final String? address;
 
   UpdateUserParams({
     required this.uid,
@@ -205,6 +222,10 @@ class UpdateUserParams {
     this.userType,
     this.platformType,
     this.isVip,
+    this.crn,
+    this.vat,
+    this.taxRate,
+    this.address,
   });
 
   Map<String, dynamic> toMap() => {
@@ -215,6 +236,10 @@ class UpdateUserParams {
         if (userType != null) 'userType': userType,
         if (platformType != null) 'platformType': platformType,
         if (isVip != null) 'isVip': isVip,
+        if (crn != null) 'crn': crn,
+        if (vat != null) 'vat': vat,
+        if (taxRate != null) 'taxRate': taxRate,
+        if (address != null) 'address': address,
       };
 }
 
@@ -352,6 +377,15 @@ class GetUserSessionsUseCase extends BaseUseCase<List<UserSession>, String> {
   @override
   Future<Either<Failure, List<UserSession>>> call(String uid) =>
       _repo.getUserSessions(uid);
+}
+
+class GetTenantEmployeesUseCase
+    extends BaseUseCase<List<TenantEmployee>, String> {
+  GetTenantEmployeesUseCase(this._repo);
+  final AdminRepository _repo;
+  @override
+  Future<Either<Failure, List<TenantEmployee>>> call(String ownerUid) =>
+      _repo.getTenantEmployees(ownerUid);
 }
 
 class GetAppSettingsUseCase extends BaseUseCase<AppSettings, NoParams> {

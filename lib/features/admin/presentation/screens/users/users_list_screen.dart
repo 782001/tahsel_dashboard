@@ -161,16 +161,92 @@ class _UserTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isEmp = user.isEmployee;
+
     return Card(
       color: AppColors.surface,
+      elevation: isEmp ? 2 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        side: BorderSide(
+          color: isEmp
+              ? const Color(0xFF673AB7).withValues(alpha: 0.35)
+              : Colors.transparent,
+          width: isEmp ? 1.5 : 0,
+        ),
+      ),
       child: ListTile(
-        title: TextWidget(
-          user.fullName,
-          style: TextStyles.font16WeightBoldText(),
+        leading: CircleAvatar(
+          radius: 22.r,
+          backgroundColor: isEmp
+              ? const Color(0xFF673AB7).withValues(alpha: 0.12)
+              : AppColors.primaryColor.withValues(alpha: 0.1),
+          child: isEmp
+              ? Icon(
+                  Icons.badge_rounded,
+                  color: const Color(0xFF673AB7),
+                  size: 22.sp,
+                )
+              : Text(
+                  user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '؟',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                    fontSize: 16.sp,
+                  ),
+                ),
+        ),
+        title: Wrap(
+          spacing: 8.w,
+          runSpacing: 4.h,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            TextWidget(
+              user.fullName.isNotEmpty
+                  ? user.fullName
+                  : (isEmp ? 'badge_employee'.tr() : 'user'.tr()),
+              style: TextStyles.font16WeightBoldText(),
+            ),
+            if (isEmp) ...[
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8.w,
+                  vertical: 2.5.h,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF673AB7).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6.r),
+                  border: Border.all(
+                    color: const Color(0xFF673AB7).withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.badge_outlined,
+                      size: 13.sp,
+                      color: const Color(0xFF673AB7),
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      'badge_employee'.tr(),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF673AB7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: 2.h),
             TextWidget(
               user.email,
               style: TextStyles.font14Weight400RightAligned(),
@@ -178,11 +254,16 @@ class _UserTile extends StatelessWidget {
             if (user.projectName.isNotEmpty) ...[
               SizedBox(height: 4.h),
               TextWidget(
-                '${'admin_project_name'.tr()}: ${user.projectName}',
-                style: TextStyles.font14Weight400RightAligned(),
+                isEmp
+                    ? '${'employee_belongs_to'.tr()}: ${user.projectName}'
+                    : '${'admin_project_name'.tr()}: ${user.projectName}',
+                style: TextStyles.font14Weight400RightAligned().copyWith(
+                  color: isEmp ? const Color(0xFF673AB7) : null,
+                  fontWeight: isEmp ? FontWeight.w600 : FontWeight.normal,
+                ),
               ),
             ],
-            SizedBox(height: 4.h),
+            SizedBox(height: 6.h),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -228,8 +309,10 @@ class _UserTile extends StatelessWidget {
                     SizedBox(width: 8.w),
                   ],
                   StatusBadge(statusKey: user.accountStatus),
-                  SizedBox(width: 8.w),
-                  StatusBadge(statusKey: user.subscriptionStatus),
+                  if (!isEmp) ...[
+                    SizedBox(width: 8.w),
+                    StatusBadge(statusKey: user.subscriptionStatus),
+                  ],
                   SizedBox(width: 8.w),
                   StatusBadge(
                     statusKey: 'platform_type_${user.platformType}',
@@ -237,13 +320,15 @@ class _UserTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (user.subscriptionEnd != null)
+            if (!isEmp && user.subscriptionEnd != null) ...[
+              SizedBox(height: 4.h),
               TextWidget(
                 '${'admin_days_remaining'.tr()}: ${user.daysRemaining}',
                 style: TextStyles.font14Weight400RightAligned().copyWith(
                   color: AppColors.subTitleColor,
                 ),
               ),
+            ],
           ],
         ),
         trailing: const Icon(Icons.chevron_right),
