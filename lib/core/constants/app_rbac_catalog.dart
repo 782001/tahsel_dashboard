@@ -155,4 +155,238 @@ class AppRbacCatalog {
 
   static int get totalPermissions =>
       groups.fold<int>(0, (sum, group) => sum + group.items.length);
+
+  /// Mapping of action/sub-permissions to their mandatory prerequisite permissions.
+  static const Map<String, List<String>> permissionDependencies = {
+    // POS
+    'pos.quick_sale': ['pos.access'],
+    'pos.manage_sessions': ['pos.access'],
+    'pos.add_debt': ['pos.access', 'customers.view'],
+
+    // Invoices
+    'invoices.create': ['invoices.view'],
+    'invoices.edit': ['invoices.view'],
+    'invoices.record_payment': ['invoices.view'],
+    'invoices.delete': ['invoices.view'],
+    'invoices.print_share': ['invoices.view'],
+
+    // Expenses
+    'expenses.add': ['expenses.view'],
+    'expenses.delete': ['expenses.view'],
+
+    // Customers
+    'customers.add': ['customers.view'],
+    'customers.settle_debt': ['customers.view'],
+    'customers.delete_debt': ['customers.view'],
+    'customers.send_whatsapp': ['customers.view'],
+    'customers.view_reports': ['customers.view'],
+
+    // My Debts
+    'my_debts.add': ['my_debts.view'],
+    'my_debts.pay': ['my_debts.view'],
+    'my_debts.delete': ['my_debts.view'],
+
+    // Vault
+    'vault.view_balance': ['vault.access'],
+    'vault.deposit': ['vault.access'],
+    'vault.withdraw': ['vault.access'],
+    'vault.view_history': ['vault.access'],
+
+    // Inventory
+    'inventory.manage_products': ['inventory.view'],
+    'inventory.manage_suppliers': ['inventory.view'],
+    'inventory.manage_purchases': ['inventory.view'],
+    'inventory.stock_adjustments': ['inventory.view'],
+    'inventory.view_analytics': ['inventory.view'],
+
+    // Employees / HR
+    'employees.record_attendance': ['employees.view'],
+    'employees.manage_payroll': ['employees.view'],
+
+    // Reports
+    'reports.export': ['reports.view_sales'],
+  };
+
+  /// Returns all direct and indirect prerequisites required by [permission].
+  static Set<String> getPrerequisites(String permission) {
+    final result = <String>{};
+    void addReqs(String p) {
+      final reqs = permissionDependencies[p];
+      if (reqs != null) {
+        for (final req in reqs) {
+          if (result.add(req)) {
+            addReqs(req);
+          }
+        }
+      }
+    }
+    addReqs(permission);
+    return result;
+  }
+
+  /// Returns all permissions that directly or indirectly depend on [permission].
+  static Set<String> getDependents(String permission) {
+    final result = <String>{};
+    void addDeps(String p) {
+      for (final entry in permissionDependencies.entries) {
+        if (entry.value.contains(p)) {
+          if (result.add(entry.key)) {
+            addDeps(entry.key);
+          }
+        }
+      }
+    }
+    addDeps(permission);
+    return result;
+  }
+
+  /// Resolves an iterable of permissions by including all their prerequisites.
+  static Set<String> resolveDependencies(Iterable<String> permissions) {
+    final resolved = Set<String>.from(permissions);
+    for (final perm in permissions) {
+      resolved.addAll(getPrerequisites(perm));
+    }
+    return resolved;
+  }
+
+  // ── Role Presets ──────────────────────────────────────────────────
+  static const String roleCashier = 'cashier';
+  static const String roleStorekeeper = 'storekeeper';
+  static const String roleAccountant = 'accountant';
+  static const String roleSupervisor = 'supervisor';
+  static const String roleCustom = 'custom';
+
+  static List<String> permissionsForPreset(String preset) {
+    switch (preset) {
+      case roleCashier:
+        return [
+          'pos.access',
+          'pos.quick_sale',
+          'pos.manage_sessions',
+          'pos.add_debt',
+          'invoices.view',
+          'invoices.create',
+          'invoices.record_payment',
+          'invoices.print_share',
+          'customers.view',
+          'customers.add',
+          'customers.settle_debt',
+          'inventory.view',
+        ];
+      case roleStorekeeper:
+        return [
+          'inventory.view',
+          'inventory.manage_products',
+          'inventory.manage_suppliers',
+          'inventory.manage_purchases',
+          'inventory.stock_adjustments',
+          'my_debts.view',
+          'my_debts.add',
+        ];
+      case roleAccountant:
+        return [
+          'invoices.view',
+          'invoices.create',
+          'invoices.edit',
+          'invoices.record_payment',
+          'invoices.print_share',
+          'expenses.view',
+          'expenses.add',
+          'customers.view',
+          'customers.add',
+          'customers.settle_debt',
+          'customers.view_reports',
+          'my_debts.view',
+          'my_debts.add',
+          'my_debts.pay',
+          'vault.access',
+          'vault.view_balance',
+          'vault.deposit',
+          'vault.withdraw',
+          'vault.view_history',
+          'reports.view_sales',
+          'reports.view_tax',
+          'reports.export',
+          'shipping.view',
+        ];
+      case roleSupervisor:
+        return [
+          'pos.access',
+          'pos.quick_sale',
+          'pos.manage_sessions',
+          'pos.add_debt',
+          'invoices.view',
+          'invoices.create',
+          'invoices.edit',
+          'invoices.record_payment',
+          'invoices.delete',
+          'invoices.print_share',
+          'expenses.view',
+          'expenses.add',
+          'customers.view',
+          'customers.add',
+          'customers.settle_debt',
+          'customers.delete_debt',
+          'customers.send_whatsapp',
+          'customers.view_reports',
+          'my_debts.view',
+          'my_debts.add',
+          'my_debts.pay',
+          'vault.access',
+          'vault.view_balance',
+          'vault.deposit',
+          'vault.withdraw',
+          'vault.view_history',
+          'inventory.view',
+          'inventory.manage_products',
+          'inventory.manage_suppliers',
+          'inventory.manage_purchases',
+          'inventory.stock_adjustments',
+          'employees.view',
+          'employees.record_attendance',
+          'shipping.view',
+        ];
+      default:
+        return [];
+    }
+  }
+
+  static String getRoleLabel(String preset) {
+    switch (preset) {
+      case roleCashier:
+        return 'كاشير (نقطة البيع)';
+      case roleStorekeeper:
+        return 'أمين مخزن ومشتريات';
+      case roleAccountant:
+        return 'محاسب مالي';
+      case roleSupervisor:
+        return 'مشرف عام للعمليات';
+      case roleCustom:
+        return 'مخصص';
+      default:
+        return preset;
+    }
+  }
+
+  static bool hasPrerequisites(String permission) {
+    final reqs = permissionDependencies[permission];
+    return reqs != null && reqs.isNotEmpty;
+  }
+
+  static String getPermissionLabel(String key, {bool isArabic = true}) {
+    for (final group in groups) {
+      for (final item in group.items) {
+        if (item.key == key) {
+          return isArabic ? item.titleAr : item.titleEn;
+        }
+      }
+    }
+    return key;
+  }
+
+  static String getPrerequisiteLabels(String permission, {bool isArabic = true}) {
+    final direct = permissionDependencies[permission];
+    if (direct == null || direct.isEmpty) return '';
+    return direct.map((k) => getPermissionLabel(k, isArabic: isArabic)).join('، ');
+  }
 }

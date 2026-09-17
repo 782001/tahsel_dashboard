@@ -7,6 +7,8 @@ import 'package:tahsel_dashboard/features/admin/presentation/screens/shell/admin
 import 'package:tahsel_dashboard/features/admin/presentation/screens/users/user_detail_screen.dart';
 import 'package:tahsel_dashboard/features/splash/splash_screen.dart';
 import 'package:tahsel_dashboard/features/standard_features/security/presentation/screens/security_warning_screen.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/users/edit_employee_permissions_screen.dart';
 import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
 
 class AppRoutes {
@@ -17,6 +19,7 @@ class AppRoutes {
   static const String adminLogin = '/admin-login';
   static const String adminShell = '/admin';
   static const String userDetail = '/admin/user';
+  static const String editEmployeePermissions = '/admin/user/employee-permissions';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -44,6 +47,15 @@ class AppRoutes {
           builder: (_) => BlocProvider(
             create: (_) => sl<UserDetailCubit>(),
             child: UserDetailScreen(uid: uid),
+          ),
+        );
+
+      case editEmployeePermissions:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => EditEmployeePermissionsScreen(
+            ownerUid: args['ownerUid'] as String,
+            employee: args['employee'] as TenantEmployee,
           ),
         );
 

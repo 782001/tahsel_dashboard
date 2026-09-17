@@ -47,6 +47,12 @@ abstract class AdminRepository {
   });
   Future<Either<Failure, List<UserSession>>> getUserSessions(String uid);
   Future<Either<Failure, List<TenantEmployee>>> getTenantEmployees(String ownerUid);
+  Future<Either<Failure, void>> updateTenantEmployeePermissions({
+    required String ownerUid,
+    required String employeeId,
+    required String rolePreset,
+    required List<String> permissions,
+  });
   Future<Either<Failure, AppSettings>> getAppSettings();
   Future<Either<Failure, PaginatedResult<BroadcastNotification>>> getNotifications({
     int limit,

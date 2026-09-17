@@ -59,6 +59,12 @@ abstract class AdminRemoteDataSource {
   });
   Future<List<UserSession>> getUserSessions(String uid);
   Future<List<TenantEmployee>> getTenantEmployees(String ownerUid);
+  Future<void> updateTenantEmployeePermissions({
+    required String ownerUid,
+    required String employeeId,
+    required String rolePreset,
+    required List<String> permissions,
+  });
   Future<AppSettings> getAppSettings();
   Future<PaginatedResult<BroadcastNotification>> getNotifications({
     int limit,
@@ -477,6 +483,47 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     } catch (e) {
       return [];
     }
+  }
+
+  @override
+  Future<void> updateTenantEmployeePermissions({
+    required String ownerUid,
+    required String employeeId,
+    required String rolePreset,
+    required List<String> permissions,
+  }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersWrite);
+
+    final batch = _firestore.batch();
+    final userRef = _userRef(employeeId);
+    batch.update(userRef, {
+      'permissions': permissions,
+      'rolePreset': rolePreset,
+      'lastPermissionsUpdatedAt': FieldValue.serverTimestamp(),
+    });
+
+    final teamRef = _userRef(ownerUid)
+        .collection(AdminConstants.appEmployeesSubcollection)
+        .doc(employeeId);
+    batch.update(teamRef, {
+      'rolePreset': rolePreset,
+      'permissions': permissions,
+      'lastUpdatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    await _audit.log(
+      admin: admin,
+      actionType: 'UPDATE_EMPLOYEE_PERMISSIONS',
+      targetUserId: employeeId,
+      metadata: {
+        'ownerUid': ownerUid,
+        'rolePreset': rolePreset,
+        'permissionsCount': permissions.length,
+      },
+    );
   }
 
   @override

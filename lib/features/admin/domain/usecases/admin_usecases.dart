@@ -388,6 +388,36 @@ class GetTenantEmployeesUseCase
       _repo.getTenantEmployees(ownerUid);
 }
 
+class UpdateTenantEmployeePermissionsParams {
+  final String ownerUid;
+  final String employeeId;
+  final String rolePreset;
+  final List<String> permissions;
+
+  UpdateTenantEmployeePermissionsParams({
+    required this.ownerUid,
+    required this.employeeId,
+    required this.rolePreset,
+    required this.permissions,
+  });
+}
+
+class UpdateTenantEmployeePermissionsUseCase
+    extends BaseUseCase<void, UpdateTenantEmployeePermissionsParams> {
+  UpdateTenantEmployeePermissionsUseCase(this._repo);
+  final AdminRepository _repo;
+
+  @override
+  Future<Either<Failure, void>> call(
+          UpdateTenantEmployeePermissionsParams params) =>
+      _repo.updateTenantEmployeePermissions(
+        ownerUid: params.ownerUid,
+        employeeId: params.employeeId,
+        rolePreset: params.rolePreset,
+        permissions: params.permissions,
+      );
+}
+
 class GetAppSettingsUseCase extends BaseUseCase<AppSettings, NoParams> {
   GetAppSettingsUseCase(this._repo);
   final AdminRepository _repo;

@@ -25,6 +25,20 @@ class AdminRepositoryImpl implements AdminRepository {
           String ownerUid) =>
       _guard(() => _remote.getTenantEmployees(ownerUid));
 
+  @override
+  Future<Either<Failure, void>> updateTenantEmployeePermissions({
+    required String ownerUid,
+    required String employeeId,
+    required String rolePreset,
+    required List<String> permissions,
+  }) =>
+      _guard(() => _remote.updateTenantEmployeePermissions(
+            ownerUid: ownerUid,
+            employeeId: employeeId,
+            rolePreset: rolePreset,
+            permissions: permissions,
+          ));
+
   Future<Either<Failure, T>> _guard<T>(Future<T> Function() action) async {
     try {
       return Right(await action());

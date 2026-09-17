@@ -62,6 +62,7 @@ void registerAdminDependencies() {
   sl.registerLazySingleton(() => ManageNoteUseCase(sl()));
   sl.registerLazySingleton(() => GetUserSessionsUseCase(sl()));
   sl.registerLazySingleton(() => GetTenantEmployeesUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateTenantEmployeePermissionsUseCase(sl()));
   sl.registerLazySingleton(() => GetAppSettingsUseCase(sl()));
   sl.registerLazySingleton(() => UpdateAppSettingsUseCase(sl()));
   sl.registerLazySingleton(() => UpdatePlatformReleaseUseCase(sl()));

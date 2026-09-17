@@ -16,7 +16,7 @@ import 'package:tahsel_dashboard/features/admin/presentation/widgets/status_badg
 import 'package:tahsel_dashboard/shared/widgets/buttons/custom_button.dart';
 import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
 import 'package:tahsel_dashboard/shared/widgets/toast/custom_toast.dart';
-import 'package:tahsel_dashboard/features/admin/presentation/widgets/employee_permissions_dialog.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/users/edit_employee_permissions_screen.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final String uid;
@@ -349,7 +349,18 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                   ),
                                 ),
                                 OutlinedButton.icon(
-                                  onPressed: () => EmployeePermissionsDialog.show(context, emp),
+                                  onPressed: () async {
+                                    final cubit = context.read<UserDetailCubit>();
+                                    final updated =
+                                        await EditEmployeePermissionsScreen.push(
+                                      context,
+                                      ownerUid: widget.uid,
+                                      employee: emp,
+                                    );
+                                    if (updated == true && mounted) {
+                                      cubit.load(widget.uid);
+                                    }
+                                  },
                                   icon: const Icon(Icons.shield_outlined, size: 16),
                                   label: TextWidget(
                                     '${emp.permissions.length} ${'admin_permissions_count'.tr()}',
