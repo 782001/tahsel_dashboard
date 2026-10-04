@@ -84,7 +84,11 @@ class ErrorScreen extends StatelessWidget {
                 ),
                 child: TextWidget(
                   AppStrings.errorScreenGoBackButton.tr(),
-                  style: TextStyles.font18Weight500White(),
+                  style: TextStyles.customStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.whiteColor,
+                  ),
                 ),
               ),
               SizedBox(height: 24.h),

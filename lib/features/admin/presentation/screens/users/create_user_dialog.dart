@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel_dashboard/core/constants/admin_constants.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/users/users_cubit.dart';
@@ -42,6 +43,19 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canWriteUsers) {
+      return AlertDialog(
+        title: TextWidget('admin_unauthorized'.tr()),
+        content: TextWidget('admin_unauthorized_hint'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: TextWidget('common_close'.tr()),
+          ),
+        ],
+      );
+    }
+
     return AlertDialog(
       title: TextWidget('admin_create_user'.tr()),
       content: SizedBox(

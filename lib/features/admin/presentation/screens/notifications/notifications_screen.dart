@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/notifications/notifications_cubit.dart';
@@ -27,7 +28,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<NotificationsCubit>().load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && context.canReadNotifications) {
+        context.read<NotificationsCubit>().load();
+      }
+    });
   }
 
   @override
@@ -39,10 +44,35 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canReadNotifications) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline_rounded, size: 64.sp, color: Colors.grey),
+              SizedBox(height: 16.h),
+              TextWidget(
+                'admin_unauthorized'.tr(),
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.h),
+              TextWidget(
+                'admin_unauthorized_hint'.tr(),
+                style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
-        Padding(
-          padding: EdgeInsets.all(16.w),
+        if (context.canWriteNotifications)
+          Padding(
+            padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

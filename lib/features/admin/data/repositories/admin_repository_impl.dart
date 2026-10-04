@@ -13,6 +13,7 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_admin.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart';
 
 class AdminRepositoryImpl implements AdminRepository {
@@ -305,4 +306,61 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Future<Either<Failure, void>> checkExpiredAccounts() =>
       _guard(_remote.checkExpiredAccounts);
+
+  @override
+  Stream<List<DashboardAdmin>> getAdminsStream() => _remote.getAdminsStream();
+
+  @override
+  Future<Either<Failure, List<DashboardAdmin>>> getAdmins() =>
+      _guard(_remote.getAdmins);
+
+  @override
+  Future<Either<Failure, DashboardAdmin>> createDashboardAdmin({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+    required List<String> permissions,
+  }) =>
+      _guard(() => _remote.createDashboardAdmin(
+            name: name,
+            email: email,
+            password: password,
+            role: role,
+            permissions: permissions,
+          ));
+
+  @override
+  Future<Either<Failure, void>> updateDashboardAdmin({
+    required String uid,
+    required String name,
+    required String role,
+    required List<String> permissions,
+    required bool active,
+  }) =>
+      _guard(() => _remote.updateDashboardAdmin(
+            uid: uid,
+            name: name,
+            role: role,
+            permissions: permissions,
+            active: active,
+          ));
+
+  @override
+  Future<Either<Failure, void>> toggleAdminStatus({
+    required String uid,
+    required bool active,
+  }) =>
+      _guard(() => _remote.toggleAdminStatus(
+            uid: uid,
+            active: active,
+          ));
+
+  @override
+  Future<Either<Failure, void>> deleteDashboardAdmin(String uid) =>
+      _guard(() => _remote.deleteDashboardAdmin(uid));
+
+  @override
+  Future<Either<Failure, void>> sendAdminPasswordResetEmail(String email) =>
+      _guard(() => _remote.sendAdminPasswordResetEmail(email));
 }

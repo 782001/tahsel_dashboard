@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel_dashboard/core/constants/admin_constants.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/services/currency/data/world_currencies.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
@@ -41,6 +42,38 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canReadUsers) {
+      return Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: CustomAppBar(
+          centerTitle: 'admin_user_details'.tr(),
+          leadingIcon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onLeadingTap: () => Navigator.pop(context),
+        ),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 48.sp, color: AppColors.error),
+                SizedBox(height: 12.h),
+                TextWidget(
+                  'غير مصرح لك باستعراض بيانات هذا المستخدم',
+                  style: TextStyles.font16WeightBoldText(),
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const TextWidget('رجوع'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: CustomAppBar(
@@ -252,42 +285,73 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           ? df.format(user.gracePeriodEnd!)
                           : '-',
                     ),
-                    Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
-                      children: [
-                        for (final days in AdminConstants.subscriptionPresets)
+                    if (context.canWriteSubscriptions)
+                      Wrap(
+                        spacing: 8.w,
+                        runSpacing: 8.h,
+                        children: [
+                          for (final days in AdminConstants.subscriptionPresets)
+                            OutlinedButton(
+                              onPressed: () =>
+                                  _subscription(SubscriptionAction.renew, days),
+                              child: TextWidget('${'admin_renew'.tr()} $days'),
+                            ),
                           OutlinedButton(
                             onPressed: () =>
-                                _subscription(SubscriptionAction.renew, days),
-                            child: TextWidget('${'admin_renew'.tr()} $days'),
+                                _subscription(SubscriptionAction.extend, 30),
+                            child: TextWidget('admin_extend'.tr()),
                           ),
-                        OutlinedButton(
-                          onPressed: () =>
-                              _subscription(SubscriptionAction.extend, 30),
-                          child: TextWidget('admin_extend'.tr()),
+                          OutlinedButton(
+                            onPressed: () => _shortenSubscription(),
+                            child: TextWidget('admin_shorten'.tr()),
+                          ),
+                          OutlinedButton(
+                            onPressed: () =>
+                                _subscription(SubscriptionAction.suspend, 0),
+                            child: TextWidget('admin_suspend_sub'.tr()),
+                          ),
+                          OutlinedButton(
+                            onPressed: () =>
+                                _subscription(SubscriptionAction.reactivate, 0),
+                            child: TextWidget('admin_reactivate_sub'.tr()),
+                          ),
+                          OutlinedButton(
+                            onPressed: () => _customSubscription(),
+                            child: TextWidget('admin_custom_duration'.tr()),
+                          ),
+                        ],
+                      )
+                    else
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 6.h,
                         ),
-                        OutlinedButton(
-                          onPressed: () => _shortenSubscription(),
-                          child: TextWidget('admin_shorten'.tr()),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
-                        OutlinedButton(
-                          onPressed: () =>
-                              _subscription(SubscriptionAction.suspend, 0),
-                          child: TextWidget('admin_suspend_sub'.tr()),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              size: 15.sp,
+                              color: AppColors.subTitleColor,
+                            ),
+                            SizedBox(width: 6.w),
+                            TextWidget(
+                              'عرض فقط (لا تملك صلاحية تعديل الاشتراكات)',
+                              style: TextStyle(
+                                fontSize: 11.5.sp,
+                                color: AppColors.subTitleColor,
+                              ),
+                            ),
+                          ],
                         ),
-                        OutlinedButton(
-                          onPressed: () =>
-                              _subscription(SubscriptionAction.reactivate, 0),
-                          child: TextWidget('admin_reactivate_sub'.tr()),
-                        ),
-                        OutlinedButton(
-                          onPressed: () => _customSubscription(),
-                          child: TextWidget('admin_custom_duration'.tr()),
-                        ),
-                      ],
-                    ),
+                      ),
                   ]),
+
                   _section('admin_usage_stats'.tr(), [_statsGrid(user)]),
                   if (user.isEmployee)
                     _section('admin_team_members'.tr(), [
@@ -586,73 +650,41 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             ),
                           ),
                       ],
-                      trailing: ElevatedButton.icon(
-                        onPressed: () async {
-                          await TeamManagementScreen.push(
-                            context,
-                            ownerUid: widget.uid,
-                            ownerName: user.fullName,
-                            ownerUserType: user.userType,
-                          );
-                          if (context.mounted) {
-                            context.read<UserDetailCubit>().load(widget.uid);
-                          }
-                        },
-                        icon: const Icon(Icons.group_rounded, size: 18),
-                        label: TextWidget(
-                          'إدارة فريق العمل',
-                          style: TextStyles.customStyle(
-                            fontSize: 12,
-                            color: AppColors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 14.w,
-                            vertical: 8.h,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                        ),
-                      ),
+                      trailing: context.canWriteUsers
+                          ? ElevatedButton.icon(
+                              onPressed: () async {
+                                await TeamManagementScreen.push(
+                                  context,
+                                  ownerUid: widget.uid,
+                                  ownerName: user.fullName,
+                                  ownerUserType: user.userType,
+                                );
+                                if (context.mounted) {
+                                  context.read<UserDetailCubit>().load(widget.uid);
+                                }
+                              },
+                              icon: const Icon(Icons.group_rounded, size: 18),
+                              label: TextWidget(
+                                'إدارة فريق العمل',
+                                style: TextStyles.customStyle(
+                                  fontSize: 12,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 14.w,
+                                  vertical: 8.h,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
-                  // _section('admin_sessions'.tr(), [
-                  //   if (state.sessions.isEmpty)
-                  //     TextWidget('no_data'.tr())
-                  //   else
-                  //     ...state.sessions.map(
-                  //       (s) => ListTile(
-                  //         title: TextWidget(s.platform),
-                  //         subtitle: TextWidget(
-                  //           s.lastActive != null
-                  //               ? df.format(s.lastActive!)
-                  //               : '-',
-                  //         ),
-                  //         trailing: s.active
-                  //             ? Icon(
-                  //                 Icons.circle,
-                  //                 color: AppColors.success,
-                  //                 size: 10.sp,
-                  //               )
-                  //             : null,
-                  //       ),
-                  //     ),
-                  //   CustomButton(
-                  //     text: 'admin_force_logout'.tr(),
-                  //     width: 200.w,
-                  //     onPressed: () async {
-                  //       final cubit = context.read<UserDetailCubit>();
-                  //       final ok = await cubit.forceLogout();
-                  //       if (!mounted) return;
-                  //       if (ok) {
-                  //         showSuccessToast('admin_force_logout_success'.tr());
-                  //       }
-                  //     },
-                  //   ),
-                  // ]),
                   _section('admin_notes'.tr(), [
                     ...state.notes.map(
                       (n) => Card(
@@ -661,32 +693,37 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           subtitle: TextWidget(
                             '${n.adminName} • ${n.createdAt != null ? df.format(n.createdAt!) : ''}',
                           ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined),
-                                onPressed: () => _editNote(n.id, n.content),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () => context
-                                    .read<UserDetailCubit>()
-                                    .deleteNote(n.id),
-                              ),
-                            ],
-                          ),
+                          trailing: context.canWriteUsers
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined),
+                                      onPressed: () =>
+                                          _editNote(n.id, n.content),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline),
+                                      onPressed: () => context
+                                          .read<UserDetailCubit>()
+                                          .deleteNote(n.id),
+                                    ),
+                                  ],
+                                )
+                              : null,
                         ),
                       ),
                     ),
-                    TextButton.icon(
-                      onPressed: () => _addNote(),
-                      icon: const Icon(Icons.add),
-                      label: TextWidget('admin_add_note'.tr()),
-                    ),
+                    if (context.canWriteUsers)
+                      TextButton.icon(
+                        onPressed: () => _addNote(),
+                        icon: const Icon(Icons.add),
+                        label: TextWidget('admin_add_note'.tr()),
+                      ),
                   ]),
-                  if (!user.isEmployee)
+                  if (!user.isEmployee && context.canWriteUsers)
                     _section('admin_actions'.tr(), [
+
                     Wrap(
                       spacing: 8.w,
                       runSpacing: 8.h,

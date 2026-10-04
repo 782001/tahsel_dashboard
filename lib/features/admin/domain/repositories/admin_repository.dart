@@ -10,6 +10,7 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_stats.
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_admin.dart';
 
 enum ReleasePlatform { android, ios, windows }
 
@@ -106,4 +107,26 @@ abstract class AdminRepository {
   );
   Future<Either<Failure, void>> setupInitialAdmin(String email, String name);
   Future<Either<Failure, void>> checkExpiredAccounts();
+  Stream<List<DashboardAdmin>> getAdminsStream();
+  Future<Either<Failure, List<DashboardAdmin>>> getAdmins();
+  Future<Either<Failure, DashboardAdmin>> createDashboardAdmin({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+    required List<String> permissions,
+  });
+  Future<Either<Failure, void>> updateDashboardAdmin({
+    required String uid,
+    required String name,
+    required String role,
+    required List<String> permissions,
+    required bool active,
+  });
+  Future<Either<Failure, void>> toggleAdminStatus({
+    required String uid,
+    required bool active,
+  });
+  Future<Either<Failure, void>> deleteDashboardAdmin(String uid);
+  Future<Either<Failure, void>> sendAdminPasswordResetEmail(String email);
 }

@@ -7,7 +7,9 @@ import 'package:tahsel_dashboard/features/admin/data/services/admin_audit_servic
 import 'package:tahsel_dashboard/features/admin/data/services/admin_auth_service.dart';
 import 'package:tahsel_dashboard/features/admin/data/services/admin_stats_service.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart';
+import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_management_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/cubit/admins/admins_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/audit/audit_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/dashboard/dashboard_cubit.dart';
@@ -76,12 +78,28 @@ void registerAdminDependencies() {
   sl.registerLazySingleton(() => SetupInitialAdminUseCase(sl()));
   sl.registerLazySingleton(() => CheckExpiredAccountsUseCase(sl()));
 
+  // Admin Management Use cases
+  sl.registerLazySingleton(() => GetDashboardAdminsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateDashboardAdminUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateDashboardAdminUseCase(sl()));
+  sl.registerLazySingleton(() => ToggleAdminStatusUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteDashboardAdminUseCase(sl()));
+  sl.registerLazySingleton(() => SendAdminPasswordResetEmailUseCase(sl()));
+
   // Cubits
   sl.registerFactory(() => AuthCubit(
         signIn: sl(),
         verifySession: sl(),
         signOut: sl(),
         setupAdmin: sl(),
+      ));
+  sl.registerFactory(() => AdminsCubit(
+        getAdmins: sl(),
+        createAdmin: sl(),
+        updateAdmin: sl(),
+        toggleStatus: sl(),
+        deleteAdmin: sl(),
+        sendPasswordReset: sl(),
       ));
   sl.registerFactory(() => DashboardCubit(sl(), sl()));
   sl.registerFactory(() => UsersCubit(

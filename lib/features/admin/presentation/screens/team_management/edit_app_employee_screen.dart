@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel_dashboard/core/constants/app_permissions.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
 import 'package:tahsel_dashboard/core/utils/styles.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/team_management/team_management_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/widgets/status_badge.dart';
 import 'package:tahsel_dashboard/shared/widgets/custom_app_bar/custom_app_bar.dart';
+import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
 
 class EditAppEmployeeScreen extends StatefulWidget {
   final String ownerUid;
@@ -257,6 +259,11 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
   }
 
   Future<void> _submit() async {
+    if (!context.canWriteUsers) {
+      _showValidationError('غير مصرح لك بتعديل الموظفين');
+      return;
+    }
+
     final trimmedName = _nameController.text.trim();
     if (trimmedName.isEmpty) {
       _showValidationError('اسم الموظف مطلوب');
@@ -288,6 +295,38 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canWriteUsers) {
+      return Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: CustomAppBar(
+          centerTitle: 'تعديل صلاحيات الموظف',
+          leadingIcon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onLeadingTap: () => Navigator.pop(context),
+        ),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 48.sp, color: AppColors.error),
+                SizedBox(height: 12.h),
+                TextWidget(
+                  'غير مصرح لك بتعديل بيانات الموظفين',
+                  style: TextStyles.font16WeightBoldText(),
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const TextWidget('رجوع'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final isDesktop = MediaQuery.of(context).size.width >= 900;
 
     return BlocProvider.value(

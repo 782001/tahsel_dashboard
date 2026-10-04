@@ -13,6 +13,7 @@ import 'package:tahsel_dashboard/features/admin/presentation/screens/users/edit_
 import 'package:tahsel_dashboard/features/admin/presentation/screens/team_management/team_management_screen.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/screens/users/edit_employee_permissions_screen.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/admins/admins_management_screen.dart';
 import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
 
 class AppRoutes {
@@ -27,6 +28,7 @@ class AppRoutes {
   static const String editUser = '/admin/user/edit';
   static const String teamManagement = '/admin/user/team';
   static const String editEmployeePermissions = '/admin/user/employee-permissions';
+  static const String adminsManagement = '/admin/admins';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -84,6 +86,11 @@ class AppRoutes {
             ownerUid: args['ownerUid'] as String,
             employee: args['employee'] as TenantEmployee,
           ),
+        );
+
+      case adminsManagement:
+        return MaterialPageRoute(
+          builder: (_) => const AdminsManagementScreen(),
         );
 
       default:

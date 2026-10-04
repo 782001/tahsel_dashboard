@@ -22,6 +22,8 @@ import 'package:tahsel_dashboard/features/admin/domain/services/user_access_poli
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/dashboard_admin.dart';
+import 'package:tahsel_dashboard/features/admin/data/models/dashboard_admin_model.dart';
 import 'package:tahsel_dashboard/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart'
     show ReleasePlatform;
@@ -119,6 +121,28 @@ abstract class AdminRemoteDataSource {
   );
   Future<void> setupInitialAdmin(String email, String name);
   Future<void> checkExpiredAccounts();
+  Stream<List<DashboardAdmin>> getAdminsStream();
+  Future<List<DashboardAdmin>> getAdmins();
+  Future<DashboardAdmin> createDashboardAdmin({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+    required List<String> permissions,
+  });
+  Future<void> updateDashboardAdmin({
+    required String uid,
+    required String name,
+    required String role,
+    required List<String> permissions,
+    required bool active,
+  });
+  Future<void> toggleAdminStatus({
+    required String uid,
+    required bool active,
+  });
+  Future<void> deleteDashboardAdmin(String uid);
+  Future<void> sendAdminPasswordResetEmail(String email);
 }
 
 class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
@@ -258,7 +282,12 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
   }
 
   void _requirePermission(AdminUser admin, String permission) {
-    if (!AdminPermissions.has(admin.role, admin.permissions, permission)) {
+    if (!AdminPermissions.has(
+      admin.role,
+      admin.permissions,
+      permission,
+      email: admin.email,
+    )) {
       throw FirebaseException(
         plugin: 'admin',
         code: 'permission-denied',
@@ -312,6 +341,18 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
   @override
   Future<DashboardStats> getDashboardStats() async {
+    final admin = await _requireAdmin();
+    final canViewStats = admin.isSuperAdmin ||
+        admin.canReadUsers ||
+        admin.canReadSubscriptions ||
+        admin.canReadAudit;
+    if (!canViewStats) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message: 'Missing permission to view dashboard stats',
+      );
+    }
     final doc = await _firestore
         .collection(AdminConstants.dashboardStatsCollection)
         .doc(AdminConstants.dashboardStatsDoc)
@@ -342,6 +383,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     String? accountStatus,
     String? subscriptionStatus,
   }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersRead);
     Query<Map<String, dynamic>> query = _usersQuery(
       accountStatus: accountStatus,
       subscriptionStatus: subscriptionStatus,
@@ -371,6 +414,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     int limit = AdminConstants.defaultPageSize,
     String? cursor,
   }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersRead);
     final normalized = query.trim().toLowerCase();
     if (normalized.isEmpty) {
       return getUsers(limit: limit, cursor: cursor);
@@ -404,6 +449,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     int limit = AdminConstants.defaultPageSize,
     String? cursor,
   }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.subscriptionsRead);
     final endDate = DateTime.now().add(Duration(days: withinDays));
     Query<Map<String, dynamic>> query = _firestore
         .collection(AdminConstants.usersCollection)
@@ -433,6 +480,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
   @override
   Future<AppUser> getUserById(String uid) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersRead);
     final doc = await _userRef(uid).get();
     if (!doc.exists) throw Exception('User not found');
     return AppUserModel.fromFirestore(await _enforceAccessPolicy(doc));
@@ -444,6 +493,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     String? cursor,
     String? targetUserId,
   }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.auditRead);
     Query<Map<String, dynamic>> query = _firestore
         .collection(AdminConstants.auditLogsCollection)
         .orderBy('timestamp', descending: true);
@@ -472,6 +523,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     int limit = AdminConstants.defaultPageSize,
     String? cursor,
   }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersRead);
     Query<Map<String, dynamic>> query = _userRef(uid)
         .collection(AdminConstants.notesSubcollection)
         .orderBy('createdAt', descending: true);
@@ -505,6 +558,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
   @override
   Future<List<UserSession>> getUserSessions(String uid) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersRead);
     final snap = await _userRef(uid)
         .collection(AdminConstants.sessionsSubcollection)
         .orderBy('lastActive', descending: true)
@@ -523,6 +578,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
   @override
   Future<List<TenantEmployee>> getTenantEmployees(String ownerUid) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersRead);
     try {
       final snap = await _userRef(ownerUid)
           .collection(AdminConstants.appEmployeesSubcollection)
@@ -817,6 +874,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
   @override
   Future<AppSettings> getAppSettings() async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.settingsRead);
     final doc = await _firestore
         .collection(AdminConstants.systemSettingsCollection)
         .doc(AdminConstants.appVersionDoc)
@@ -849,6 +908,8 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     int limit = AdminConstants.defaultPageSize,
     String? cursor,
   }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.notificationsRead);
     Query<Map<String, dynamic>> query = _firestore
         .collection(AdminConstants.notificationsCollection)
         .orderBy('createdAt', descending: true);
@@ -1644,6 +1705,249 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
         // Ignore session revocation errors for individual users
       }
     }
+  }
+
+  @override
+  Stream<List<DashboardAdmin>> getAdminsStream() {
+    return _firestore
+        .collection(AdminConstants.adminsCollection)
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map(DashboardAdminModel.fromFirestore).toList());
+  }
+
+  @override
+  Future<List<DashboardAdmin>> getAdmins() async {
+    final currentAdmin = await _requireAdmin();
+    if (!currentAdmin.isPrimarySuperAdmin) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message: 'إدارة المدراء متاحة حصرياً للمالك الرئيسي',
+      );
+    }
+    final snap = await _firestore
+        .collection(AdminConstants.adminsCollection)
+        .orderBy('createdAt', descending: false)
+        .get();
+    return snap.docs.map(DashboardAdminModel.fromFirestore).toList();
+  }
+
+  @override
+  Future<DashboardAdmin> createDashboardAdmin({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+    required List<String> permissions,
+  }) async {
+    final currentAdmin = await _requireAdmin();
+    if (!currentAdmin.canManageAdmins) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message: 'إدارة المدراء متاحة حصرياً للمالك الرئيسي وحاملي الصلاحية',
+      );
+    }
+
+    final cred = await _authService.createAuthUser(
+      email: email.trim(),
+      password: password.trim(),
+    );
+    final uid = cred.user!.uid;
+
+    final now = Timestamp.now();
+    final adminModel = DashboardAdminModel(
+      uid: uid,
+      email: email.trim().toLowerCase(),
+      name: name.trim(),
+      role: role,
+      permissions: permissions,
+      active: true,
+      createdAt: now.toDate(),
+    );
+
+    await _firestore
+        .collection(AdminConstants.adminsCollection)
+        .doc(uid)
+        .set(adminModel.toMap());
+
+    await _audit.log(
+      admin: currentAdmin,
+      actionType: 'CREATE_DASHBOARD_ADMIN',
+      targetUserId: uid,
+      metadata: {
+        'name': name.trim(),
+        'email': email.trim().toLowerCase(),
+        'role': role,
+        'permissionsCount': permissions.length,
+      },
+    );
+
+    return adminModel;
+  }
+
+  @override
+  Future<void> updateDashboardAdmin({
+    required String uid,
+    required String name,
+    required String role,
+    required List<String> permissions,
+    required bool active,
+  }) async {
+    final currentAdmin = await _requireAdmin();
+    if (!currentAdmin.canManageAdmins) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message: 'إدارة المدراء متاحة حصرياً للمالك الرئيسي وحاملي الصلاحية',
+      );
+    }
+
+    final adminDoc = await _firestore
+        .collection(AdminConstants.adminsCollection)
+        .doc(uid)
+        .get();
+    if (!adminDoc.exists) throw Exception('الأدمن غير موجود');
+    final targetEmail = adminDoc.data()?['email'] as String? ?? '';
+
+    if (targetEmail.toLowerCase().trim() == DashboardAdmin.primaryAdminEmail &&
+        !currentAdmin.isPrimarySuperAdmin) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message: 'لا يمكن تعديل الحساب الرئيسي للمالك إلا من قبل المالك الأساسي',
+      );
+    }
+
+    if (targetEmail.toLowerCase().trim() == DashboardAdmin.primaryAdminEmail &&
+        !active) {
+      throw Exception('لا يمكن تعطيل الحساب الرئيسي للمالك');
+    }
+
+    await _firestore
+        .collection(AdminConstants.adminsCollection)
+        .doc(uid)
+        .update({
+      'name': name.trim(),
+      'role': role,
+      'permissions': permissions,
+      'active': active,
+      'lastUpdatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await _audit.log(
+      admin: currentAdmin,
+      actionType: 'UPDATE_DASHBOARD_ADMIN',
+      targetUserId: uid,
+      metadata: {
+        'name': name.trim(),
+        'role': role,
+        'active': active,
+        'permissionsCount': permissions.length,
+      },
+    );
+  }
+
+  @override
+  Future<void> toggleAdminStatus({
+    required String uid,
+    required bool active,
+  }) async {
+    final currentAdmin = await _requireAdmin();
+    if (!currentAdmin.canManageAdmins) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message: 'إدارة المدراء متاحة حصرياً للمالك الرئيسي وحاملي الصلاحية',
+      );
+    }
+
+    final adminDoc = await _firestore
+        .collection(AdminConstants.adminsCollection)
+        .doc(uid)
+        .get();
+    if (!adminDoc.exists) throw Exception('الأدمن غير موجود');
+    final targetEmail = adminDoc.data()?['email'] as String? ?? '';
+
+    if (targetEmail.toLowerCase().trim() == DashboardAdmin.primaryAdminEmail) {
+      throw Exception('لا يمكن تغيير حالة الحساب الرئيسي للمالك');
+    }
+
+    await _firestore
+        .collection(AdminConstants.adminsCollection)
+        .doc(uid)
+        .update({
+      'active': active,
+      'lastUpdatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await _audit.log(
+      admin: currentAdmin,
+      actionType:
+          active ? 'ACTIVATE_DASHBOARD_ADMIN' : 'DEACTIVATE_DASHBOARD_ADMIN',
+      targetUserId: uid,
+      metadata: {'targetEmail': targetEmail},
+    );
+  }
+
+  @override
+  Future<void> deleteDashboardAdmin(String uid) async {
+    final currentAdmin = await _requireAdmin();
+    if (!currentAdmin.canManageAdmins) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message: 'إدارة المدراء متاحة حصرياً للمالك الرئيسي وحاملي الصلاحية',
+      );
+    }
+
+    final adminDoc = await _firestore
+        .collection(AdminConstants.adminsCollection)
+        .doc(uid)
+        .get();
+    if (!adminDoc.exists) return;
+    final targetEmail = adminDoc.data()?['email'] as String? ?? '';
+
+    if (targetEmail.toLowerCase().trim() == DashboardAdmin.primaryAdminEmail ||
+        uid == currentAdmin.uid) {
+      throw Exception('لا يمكن حذف الحساب الرئيسي للمالك أو حسابك الحالي');
+    }
+
+    await _firestore
+        .collection(AdminConstants.adminsCollection)
+        .doc(uid)
+        .delete();
+
+    await _audit.log(
+      admin: currentAdmin,
+      actionType: 'DELETE_DASHBOARD_ADMIN',
+      targetUserId: uid,
+      metadata: {'targetEmail': targetEmail},
+    );
+  }
+
+  @override
+  Future<void> sendAdminPasswordResetEmail(String email) async {
+    final currentAdmin = await _requireAdmin();
+    if (!currentAdmin.canManageAdmins) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message: 'إدارة المدراء متاحة حصرياً للمالك الرئيسي وحاملي الصلاحية',
+      );
+    }
+    if (email.toLowerCase().trim() == DashboardAdmin.primaryAdminEmail &&
+        !currentAdmin.isPrimarySuperAdmin) {
+      throw FirebaseException(
+        plugin: 'admin',
+        code: 'permission-denied',
+        message:
+            'لا يمكن طلب إعادة تعيين كلمة مرور المالك الرئيسي إلا من قبل المالك الأساسي',
+      );
+    }
+    return _authService.sendPasswordResetEmail(email.trim());
   }
 
   DateTime? _toDate(dynamic value) {

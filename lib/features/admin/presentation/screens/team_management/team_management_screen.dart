@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel_dashboard/core/constants/app_rbac_catalog.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/services/injection_container.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
@@ -122,6 +123,38 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canReadUsers) {
+      return Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: CustomAppBar(
+          centerTitle: 'فريق العمل والصلاحيات',
+          leadingIcon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onLeadingTap: () => Navigator.pop(context),
+        ),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 48.sp, color: AppColors.error),
+                SizedBox(height: 12.h),
+                TextWidget(
+                  'غير مصرح لك باستعراض فريق العمل',
+                  style: TextStyles.font16WeightBoldText(),
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const TextWidget('رجوع'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final isDesktop = MediaQuery.of(context).size.width >= 900;
 
     return BlocProvider.value(
@@ -173,24 +206,26 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
             ),
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => AddAppEmployeeScreen.push(
-            context,
-            ownerUid: widget.ownerUid,
-            cubit: _cubit,
-            userType: widget.ownerUserType,
-          ),
-          backgroundColor: AppColors.primaryColor,
-          icon: const Icon(Icons.person_add_rounded, color: Colors.white),
-          label: const Text(
-            'إضافة موظف جديد',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
+        floatingActionButton: context.canWriteUsers
+            ? FloatingActionButton.extended(
+                onPressed: () => AddAppEmployeeScreen.push(
+                  context,
+                  ownerUid: widget.ownerUid,
+                  cubit: _cubit,
+                  userType: widget.ownerUserType,
+                ),
+                backgroundColor: AppColors.primaryColor,
+                icon: const Icon(Icons.person_add_rounded, color: Colors.white),
+                label: const Text(
+                  'إضافة موظف جديد',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+            : null,
         body: SafeArea(
           child: BlocConsumer<TeamManagementCubit, TeamManagementState>(
             listener: (context, state) {
@@ -605,32 +640,35 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                     ],
                   ),
                 ),
-                SizedBox(width: 4.w),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 20),
-                      color: AppColors.primaryColor,
-                      tooltip: 'تعديل بيانات وصلاحيات الموظف',
-                      onPressed: () {
-                        EditAppEmployeeScreen.push(
-                          context,
-                          ownerUid: widget.ownerUid,
-                          employee: emp,
-                          cubit: _cubit,
-                          userType: widget.ownerUserType,
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                      color: AppColors.error,
-                      tooltip: 'حذف الموظف',
-                      onPressed: () => _showDeleteConfirmation(emp.id, emp.name),
-                    ),
-                  ],
-                ),
+                if (context.canWriteUsers) ...[
+                  SizedBox(width: 4.w),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        color: AppColors.primaryColor,
+                        tooltip: 'تعديل بيانات وصلاحيات الموظف',
+                        onPressed: () {
+                          EditAppEmployeeScreen.push(
+                            context,
+                            ownerUid: widget.ownerUid,
+                            employee: emp,
+                            cubit: _cubit,
+                            userType: widget.ownerUserType,
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                        color: AppColors.error,
+                        tooltip: 'حذف الموظف',
+                        onPressed: () => _showDeleteConfirmation(emp.id, emp.name),
+                      ),
+                    ],
+                  ),
+                ],
+
               ],
             ),
           ],

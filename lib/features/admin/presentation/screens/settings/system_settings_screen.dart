@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/app_settings.dart';
@@ -157,6 +158,30 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canReadSettings) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline_rounded, size: 64.sp, color: Colors.grey),
+              SizedBox(height: 16.h),
+              TextWidget(
+                'admin_unauthorized'.tr(),
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.h),
+              TextWidget(
+                'admin_unauthorized_hint'.tr(),
+                style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return BlocConsumer<SettingsCubit, SettingsState>(
       listener: (context, state) {
         if (state is SettingsLoaded) {
@@ -454,11 +479,43 @@ class _PlatformReleaseForm extends StatelessWidget {
             SizedBox(height: 28.h),
 
             // ─── Save button ──────────────────────────────────────────────
-            CustomButton(
-              text: isLoading ? 'admin_saving'.tr() : saveLabelKey.tr(),
-              isLoading: isLoading,
-              onPressed: onSave,
-            ),
+            if (context.canWriteSettings)
+              CustomButton(
+                text: isLoading ? 'admin_saving'.tr() : saveLabelKey.tr(),
+                isLoading: isLoading,
+                onPressed: onSave,
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: Colors.amber.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.lock_outline,
+                      size: 16.sp,
+                      color: Colors.amber[800],
+                    ),
+                    SizedBox(width: 8.w),
+                    TextWidget(
+                      'admin_read_only_access'.tr(),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.amber[800],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             SizedBox(height: 24.h),
           ],
         ),

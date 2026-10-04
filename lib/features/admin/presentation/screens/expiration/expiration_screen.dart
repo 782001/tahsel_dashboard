@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel_dashboard/core/constants/admin_constants.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
 import 'package:tahsel_dashboard/core/utils/styles.dart';
@@ -32,6 +33,25 @@ class _ExpirationScreenState extends State<ExpirationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canReadSubscriptions) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline, size: 48.sp, color: AppColors.error),
+              SizedBox(height: 12.h),
+              TextWidget(
+                'غير مصرح لك باستعراض الاشتراكات',
+                style: TextStyles.font16WeightBoldText(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
         Padding(
@@ -144,20 +164,23 @@ class _ExpirationTile extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 8.h),
-                  CustomButton(
-                    text: 'admin_quick_renew'.tr(),
-                    width: 120.w,
-                    height: 40.h,
-                    onPressed: () async {
-                      final ok = await context
-                          .read<ExpirationCubit>()
-                          .quickRenew(user.uid);
-                      if (ok) {
-                        showSuccessToast('admin_subscription_updated'.tr());
-                      }
-                    },
-                  ),
+                  if (context.canWriteSubscriptions) ...[
+                    SizedBox(height: 8.h),
+                    CustomButton(
+                      text: 'admin_quick_renew'.tr(),
+                      width: 120.w,
+                      height: 40.h,
+                      onPressed: () async {
+                        final ok = await context
+                            .read<ExpirationCubit>()
+                            .quickRenew(user.uid);
+                        if (ok) {
+                          showSuccessToast('admin_subscription_updated'.tr());
+                        }
+                      },
+                    ),
+                  ],
+
                 ],
               ),
             ),

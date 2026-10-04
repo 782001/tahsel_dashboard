@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel_dashboard/core/constants/admin_constants.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel_dashboard/core/services/injection_container.dart';
@@ -66,6 +67,11 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   }
 
   Future<void> _handleCreateUser() async {
+    if (!context.canWriteUsers) {
+      showfailureToast('غير مصرح لك بإنشاء مستخدمين جدد');
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -115,6 +121,38 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canWriteUsers) {
+      return Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: CustomAppBar(
+          centerTitle: 'admin_create_user'.tr(),
+          leadingIcon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onLeadingTap: () => Navigator.pop(context),
+        ),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 48.sp, color: AppColors.error),
+                SizedBox(height: 12.h),
+                TextWidget(
+                  'غير مصرح لك بإنشاء مستخدمين جدد',
+                  style: TextStyles.font16WeightBoldText(),
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const TextWidget('رجوع'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final isDesktop = MediaQuery.of(context).size.width >= 850;
 
     return Scaffold(

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/dashboard/dashboard_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/dashboard/dashboard_state.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/widgets/stat_card.dart';
 import 'package:tahsel_dashboard/shared/widgets/empty_widget/empty_widget.dart';
+import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
 import 'package:tahsel_dashboard/shared/widgets/shimmer/shimmer_loading.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -17,14 +19,48 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  bool get _canViewDashboard =>
+      context.isSuperAdmin ||
+      context.canReadUsers ||
+      context.canReadSubscriptions ||
+      context.canReadAudit;
+
   @override
   void initState() {
     super.initState();
-    context.read<DashboardCubit>().load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _canViewDashboard) {
+        context.read<DashboardCubit>().load();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_canViewDashboard) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline_rounded, size: 64.sp, color: Colors.grey),
+              SizedBox(height: 16.h),
+              TextWidget(
+                'admin_unauthorized'.tr(),
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.h),
+              TextWidget(
+                'admin_unauthorized_hint'.tr(),
+                style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return BlocBuilder<DashboardCubit, DashboardState>(
       builder: (context, state) {
         if (state is DashboardLoading) {

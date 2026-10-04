@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel_dashboard/core/constants/app_rbac_catalog.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/services/injection_container.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
@@ -167,6 +168,11 @@ class _EditEmployeePermissionsScreenState
   }
 
   Future<void> _submit() async {
+    if (!context.canWriteUsers) {
+      showfailureToast('غير مصرح لك بتعديل صلاحيات الموظفين');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final useCase = sl<UpdateTenantEmployeePermissionsUseCase>();
@@ -195,6 +201,38 @@ class _EditEmployeePermissionsScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canWriteUsers) {
+      return Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: AppBar(
+          title: TextWidget('edit_employee_permissions'.tr()),
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+        ),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 48.sp, color: AppColors.error),
+                SizedBox(height: 12.h),
+                TextWidget(
+                  'غير مصرح لك بتعديل صلاحيات الموظفين',
+                  style: TextStyles.font16WeightBoldText(),
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const TextWidget('رجوع'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(

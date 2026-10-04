@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel_dashboard/core/extensions/auth_context_extensions.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
 import 'package:tahsel_dashboard/core/utils/styles.dart';
@@ -38,6 +39,27 @@ class _UsersListScreenState extends State<UsersListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.canReadUsers) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline, size: 48.sp, color: AppColors.error),
+              SizedBox(height: 12.h),
+              TextWidget(
+                'غير مصرح لك باستعراض قائمة المستخدمين',
+                style: TextStyles.font16WeightBoldText(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final canCreate = context.canWriteUsers;
+
     return Column(
       children: [
         Padding(
@@ -51,19 +73,22 @@ class _UsersListScreenState extends State<UsersListScreen> {
                   onChanged: (v) => context.read<UsersCubit>().search(v),
                 ),
               ),
-              SizedBox(width: 12.w),
-              SizedBox(
-                width: 140.w,
-                child: CustomButton(
-                  text: 'admin_create_user'.tr(),
-                  height: 48.h,
-                  icon: Icons.add,
-                  onPressed: () => _openCreateUserScreen(context),
+              if (canCreate) ...[
+                SizedBox(width: 12.w),
+                SizedBox(
+                  width: 140.w,
+                  child: CustomButton(
+                    text: 'admin_create_user'.tr(),
+                    height: 48.h,
+                    icon: Icons.add,
+                    onPressed: () => _openCreateUserScreen(context),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
+
         Expanded(
           child: BlocBuilder<UsersCubit, UsersState>(
             builder: (context, state) {
