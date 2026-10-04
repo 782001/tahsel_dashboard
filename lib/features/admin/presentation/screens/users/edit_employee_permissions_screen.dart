@@ -290,7 +290,10 @@ class _EditEmployeePermissionsScreenState
                       widget.employee.name,
                       style: TextStyles.appbartext().copyWith(fontSize: 18.sp),
                     ),
-                    StatusBadge(statusKey: widget.employee.accountStatus),
+                    StatusBadge(
+                      statusKey: widget.employee.accountStatus,
+                      isEmployee: true,
+                    ),
                   ],
                 ),
                 SizedBox(height: 4.h),

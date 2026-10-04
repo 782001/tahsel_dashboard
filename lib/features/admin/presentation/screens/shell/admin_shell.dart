@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
+import 'package:tahsel_dashboard/core/utils/app_constants.dart';
 import 'package:tahsel_dashboard/core/utils/styles.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/screens/audit/audit_logs_screen.dart';
@@ -25,62 +27,181 @@ class _AdminShellState extends State<AdminShell> {
   int _selectedIndex = 0;
 
   final _screens = const [
-    UsersListScreen(), AdminDashboardScreen(),
-
+    UsersListScreen(),
+    AdminDashboardScreen(),
     ExpirationScreen(),
     AuditLogsScreen(),
-    // NotificationsScreen(),
     SystemSettingsScreen(),
   ];
 
   List<_NavItem> get _navItems => [
-    _NavItem('admin_nav_users'.tr(), Icons.people_outline),
-    _NavItem('admin_nav_dashboard'.tr(), Icons.dashboard_outlined),
-
-    _NavItem('admin_nav_expiration'.tr(), Icons.schedule),
-    _NavItem('admin_nav_audit'.tr(), Icons.history),
-    // _NavItem('admin_nav_notifications'.tr(), Icons.campaign_outlined),
-    _NavItem('admin_nav_settings'.tr(), Icons.settings_outlined),
+    _NavItem(
+      'admin_nav_users'.tr(),
+      Icons.people_outline_rounded,
+      Icons.people_rounded,
+    ),
+    _NavItem(
+      'admin_nav_dashboard'.tr(),
+      Icons.dashboard_outlined,
+      Icons.dashboard_rounded,
+    ),
+    _NavItem(
+      'admin_nav_expiration'.tr(),
+      Icons.schedule_outlined,
+      Icons.schedule_rounded,
+    ),
+    _NavItem(
+      'admin_nav_audit'.tr(),
+      Icons.history_rounded,
+      Icons.manage_history_rounded,
+    ),
+    _NavItem(
+      'admin_nav_settings'.tr(),
+      Icons.settings_outlined,
+      Icons.settings_rounded,
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 900;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       body: Row(
         children: [
-          if (isWide) _buildSidebar(),
+          if (isWide) _buildSidebar(isDrawer: false),
           Expanded(
             child: Column(
               children: [
-                _buildTopBar(isWide),
+                _buildTopBar(isWide, isDark),
                 Expanded(child: _screens[_selectedIndex]),
               ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: isWide
-          ? null
-          : NavigationBar(
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (i) => setState(() => _selectedIndex = i),
-              destinations: _navItems
-                  .map(
-                    (n) => NavigationDestination(
-                      icon: Icon(n.icon),
-                      label: n.label,
-                    ),
-                  )
-                  .toList(),
-            ),
-      drawer: isWide ? null : Drawer(child: _buildSidebar()),
+      bottomNavigationBar: isWide ? null : _buildBottomNavBar(context, isDark),
+      drawer: isWide ? null : Drawer(child: _buildSidebar(isDrawer: true)),
     );
   }
 
-  Widget _buildSidebar() {
+  Widget _buildBottomNavBar(BuildContext context, bool isDark) {
+    final activeColor = AppColors.primaryColor;
+    final inactiveColor = isDark ? Colors.white54 : const Color(0xFF8A94A6);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.45)
+                : const Color(0xFF1E56A0).withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, -4),
+          ),
+        ],
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          height: 66.h,
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+          child: Row(
+            children: List.generate(_navItems.length, (index) {
+              final item = _navItems[index];
+              final isSelected = _selectedIndex == index;
+
+              return Expanded(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedIndex = index);
+                    },
+                    borderRadius: BorderRadius.circular(16.r),
+                    splashColor: activeColor.withValues(alpha: 0.12),
+                    highlightColor: Colors.transparent,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 3.h),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSelected ? 16.w : 6.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? activeColor.withValues(
+                                      alpha: isDark ? 0.22 : 0.12,
+                                    )
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16.r),
+                            ),
+                            child: AnimatedScale(
+                              scale: isSelected ? 1.08 : 1.0,
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeOutCubic,
+                              child: Icon(
+                                isSelected ? item.selectedIcon : item.icon,
+                                size: 22.sp,
+                                color: isSelected ? activeColor : inactiveColor,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 3.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 2.w),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: TextWidget(
+                                item.label,
+                                style: TextStyle(
+                                  fontSize: 10.5.sp,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  fontFamily: AppConstants.fontFamily,
+                                  color: isSelected
+                                      ? activeColor
+                                      : inactiveColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSidebar({bool isDrawer = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: 240.w,
       color: AppColors.surface,
@@ -91,41 +212,68 @@ class _AdminShellState extends State<AdminShell> {
             'admin_panel_title'.tr(),
             style: TextStyles.font18Weight500Action(),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 20.h),
+          Divider(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.06),
+            height: 1,
+          ),
+          SizedBox(height: 12.h),
           Expanded(
             child: ListView.builder(
               itemCount: _navItems.length,
               itemBuilder: (context, index) {
                 final item = _navItems[index];
                 final selected = _selectedIndex == index;
-                return ListTile(
-                  selected: selected,
-                  selectedTileColor: AppColors.primaryColor.withValues(
-                    alpha: 0.1,
+                return Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 3.h,
                   ),
-                  leading: Icon(
-                    item.icon,
+                  decoration: BoxDecoration(
                     color: selected
-                        ? AppColors.primaryColor
-                        : AppColors.subTitleColor,
+                        ? AppColors.primaryColor.withValues(
+                            alpha: isDark ? 0.20 : 0.10,
+                          )
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
-                  title: TextWidget(
-                    item.label,
-                    style: TextStyles.font14Weight400RightAligned().copyWith(
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    dense: true,
+                    leading: Icon(
+                      selected ? item.selectedIcon : item.icon,
                       color: selected
                           ? AppColors.primaryColor
-                          : AppColors.textColor,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                          : (isDark ? Colors.white60 : AppColors.subTitleColor),
                     ),
+                    title: TextWidget(
+                      item.label,
+                      style: TextStyles.font14Weight400RightAligned().copyWith(
+                        color: selected
+                            ? AppColors.primaryColor
+                            : AppColors.textColor,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedIndex = index);
+                      if (isDrawer && Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                    },
                   ),
-                  onTap: () => setState(() => _selectedIndex = index),
                 );
               },
             ),
           ),
           const LanguageSection(),
           ListTile(
-            leading: const Icon(Icons.logout),
+            leading: const Icon(Icons.logout_rounded),
             title: TextWidget('logout'.tr()),
             onTap: () => context.read<AuthCubit>().logout(),
           ),
@@ -135,16 +283,26 @@ class _AdminShellState extends State<AdminShell> {
     );
   }
 
-  Widget _buildTopBar(bool isWide) {
+  Widget _buildTopBar(bool isWide, bool isDark) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.black.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
+      ),
       child: Row(
         children: [
           if (!isWide)
             Builder(
               builder: (ctx) => IconButton(
-                icon: const Icon(Icons.menu),
+                icon: const Icon(Icons.menu_rounded),
                 onPressed: () => Scaffold.of(ctx).openDrawer(),
               ),
             ),
@@ -156,7 +314,7 @@ class _AdminShellState extends State<AdminShell> {
           ),
           const ThemeToggleButton(),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
             onPressed: () => context.read<AuthCubit>().logout(),
           ),
         ],
@@ -168,5 +326,9 @@ class _AdminShellState extends State<AdminShell> {
 class _NavItem {
   final String label;
   final IconData icon;
-  _NavItem(this.label, this.icon);
+  final IconData selectedIcon;
+
+  const _NavItem(this.label, this.icon, [IconData? selectedIcon])
+      : selectedIcon = selectedIcon ?? icon;
 }
+

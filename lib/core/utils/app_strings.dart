@@ -105,6 +105,12 @@ class AppStrings {
   static const String partialPayment = "partial_payment";
   static const String amountPaid = "amount_paid";
   static const String currencyEgp = "currency_egp";
+  static const String changeCurrency = 'change_currency';
+  static const String selectCurrency = 'select_currency';
+  static const String selectCurrencyHint = 'select_currency_hint';
+  static const String searchCurrencyHint = 'search_currency_hint';
+  static const String currencyUpdatedSuccess = 'currency_updated_success';
+  static const String currencyLabel = 'currency_label';
   static const String confirm = "confirm";
   static const String cancel = "cancel";
   static const String partialPayLabel = "partial_pay_label";

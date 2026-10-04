@@ -13,6 +13,7 @@ import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_cub
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/dashboard/dashboard_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/notifications/notifications_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/settings/settings_cubit.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/cubit/team_management/team_management_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/user_detail/user_detail_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/users/users_cubit.dart';
 
@@ -63,6 +64,10 @@ void registerAdminDependencies() {
   sl.registerLazySingleton(() => GetUserSessionsUseCase(sl()));
   sl.registerLazySingleton(() => GetTenantEmployeesUseCase(sl()));
   sl.registerLazySingleton(() => UpdateTenantEmployeePermissionsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateAppEmployeeUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateAppEmployeeUseCase(sl()));
+  sl.registerLazySingleton(() => ToggleEmployeeStatusUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteAppEmployeeUseCase(sl()));
   sl.registerLazySingleton(() => GetAppSettingsUseCase(sl()));
   sl.registerLazySingleton(() => UpdateAppSettingsUseCase(sl()));
   sl.registerLazySingleton(() => UpdatePlatformReleaseUseCase(sl()));
@@ -106,6 +111,13 @@ void registerAdminDependencies() {
         forceLogout: sl(),
         subscriptionAction: sl(),
         manageNote: sl(),
+      ));
+  sl.registerFactory(() => TeamManagementCubit(
+        getEmployees: sl(),
+        createEmployee: sl(),
+        updateEmployee: sl(),
+        toggleStatus: sl(),
+        deleteEmployee: sl(),
       ));
   sl.registerFactory(() => AuditCubit(sl()));
   sl.registerFactory(() => NotificationsCubit(

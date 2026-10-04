@@ -12,6 +12,7 @@ import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart';
+import 'package:tahsel_dashboard/core/services/currency/domain/entities/currency_entity.dart';
 
 class SignInAdminUseCase extends BaseUseCase<AdminUser, SignInParams> {
   SignInAdminUseCase(this._repo);
@@ -159,6 +160,7 @@ class CreateUserParams {
   final String? vat;
   final double? taxRate;
   final String? address;
+  final dynamic currency;
 
   CreateUserParams({
     required this.email,
@@ -174,6 +176,7 @@ class CreateUserParams {
     this.vat,
     this.taxRate,
     this.address,
+    this.currency,
   });
 
   Map<String, dynamic> toMap() => {
@@ -190,6 +193,9 @@ class CreateUserParams {
         if (vat != null) 'vat': vat,
         if (taxRate != null) 'taxRate': taxRate,
         if (address != null) 'address': address,
+        if (currency != null)
+          'currency':
+              currency is CurrencyEntity ? currency.toMap() : currency,
       };
 }
 
@@ -209,10 +215,12 @@ class UpdateUserParams {
   final String? userType;
   final String? platformType;
   final bool? isVip;
+  final String? projectName;
   final String? crn;
   final String? vat;
   final double? taxRate;
   final String? address;
+  final dynamic currency;
 
   UpdateUserParams({
     required this.uid,
@@ -222,10 +230,12 @@ class UpdateUserParams {
     this.userType,
     this.platformType,
     this.isVip,
+    this.projectName,
     this.crn,
     this.vat,
     this.taxRate,
     this.address,
+    this.currency,
   });
 
   Map<String, dynamic> toMap() => {
@@ -236,10 +246,14 @@ class UpdateUserParams {
         if (userType != null) 'userType': userType,
         if (platformType != null) 'platformType': platformType,
         if (isVip != null) 'isVip': isVip,
+        if (projectName != null) 'projectName': projectName,
         if (crn != null) 'crn': crn,
         if (vat != null) 'vat': vat,
         if (taxRate != null) 'taxRate': taxRate,
         if (address != null) 'address': address,
+        if (currency != null)
+          'currency':
+              currency is CurrencyEntity ? currency.toMap() : currency,
       };
 }
 
@@ -415,6 +429,122 @@ class UpdateTenantEmployeePermissionsUseCase
         employeeId: params.employeeId,
         rolePreset: params.rolePreset,
         permissions: params.permissions,
+      );
+}
+
+class CreateAppEmployeeParams {
+  final String ownerUid;
+  final String name;
+  final String email;
+  final String password;
+  final String rolePreset;
+  final List<String> permissions;
+
+  CreateAppEmployeeParams({
+    required this.ownerUid,
+    required this.name,
+    required this.email,
+    required this.password,
+    required this.rolePreset,
+    required this.permissions,
+  });
+}
+
+class CreateAppEmployeeUseCase
+    extends BaseUseCase<TenantEmployee, CreateAppEmployeeParams> {
+  CreateAppEmployeeUseCase(this._repo);
+  final AdminRepository _repo;
+
+  @override
+  Future<Either<Failure, TenantEmployee>> call(CreateAppEmployeeParams params) =>
+      _repo.createAppEmployee(
+        ownerUid: params.ownerUid,
+        name: params.name,
+        email: params.email,
+        password: params.password,
+        rolePreset: params.rolePreset,
+        permissions: params.permissions,
+      );
+}
+
+class UpdateAppEmployeeParams {
+  final String ownerUid;
+  final String employeeId;
+  final String name;
+  final String rolePreset;
+  final List<String> permissions;
+
+  UpdateAppEmployeeParams({
+    required this.ownerUid,
+    required this.employeeId,
+    required this.name,
+    required this.rolePreset,
+    required this.permissions,
+  });
+}
+
+class UpdateAppEmployeeUseCase
+    extends BaseUseCase<void, UpdateAppEmployeeParams> {
+  UpdateAppEmployeeUseCase(this._repo);
+  final AdminRepository _repo;
+
+  @override
+  Future<Either<Failure, void>> call(UpdateAppEmployeeParams params) =>
+      _repo.updateAppEmployee(
+        ownerUid: params.ownerUid,
+        employeeId: params.employeeId,
+        name: params.name,
+        rolePreset: params.rolePreset,
+        permissions: params.permissions,
+      );
+}
+
+class ToggleEmployeeStatusParams {
+  final String ownerUid;
+  final String employeeId;
+  final String newStatus;
+
+  ToggleEmployeeStatusParams({
+    required this.ownerUid,
+    required this.employeeId,
+    required this.newStatus,
+  });
+}
+
+class ToggleEmployeeStatusUseCase
+    extends BaseUseCase<void, ToggleEmployeeStatusParams> {
+  ToggleEmployeeStatusUseCase(this._repo);
+  final AdminRepository _repo;
+
+  @override
+  Future<Either<Failure, void>> call(ToggleEmployeeStatusParams params) =>
+      _repo.toggleEmployeeStatus(
+        ownerUid: params.ownerUid,
+        employeeId: params.employeeId,
+        newStatus: params.newStatus,
+      );
+}
+
+class DeleteAppEmployeeParams {
+  final String ownerUid;
+  final String employeeId;
+
+  DeleteAppEmployeeParams({
+    required this.ownerUid,
+    required this.employeeId,
+  });
+}
+
+class DeleteAppEmployeeUseCase
+    extends BaseUseCase<void, DeleteAppEmployeeParams> {
+  DeleteAppEmployeeUseCase(this._repo);
+  final AdminRepository _repo;
+
+  @override
+  Future<Either<Failure, void>> call(DeleteAppEmployeeParams params) =>
+      _repo.deleteAppEmployee(
+        ownerUid: params.ownerUid,
+        employeeId: params.employeeId,
       );
 }
 

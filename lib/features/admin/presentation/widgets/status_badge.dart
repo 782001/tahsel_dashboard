@@ -5,11 +5,25 @@ import 'package:tahsel_dashboard/core/utils/app_colors.dart';
 
 class StatusBadge extends StatelessWidget {
   final String statusKey;
+  final bool isEmployee;
 
-  const StatusBadge({super.key, required this.statusKey});
+  const StatusBadge({
+    super.key,
+    required this.statusKey,
+    this.isEmployee = false,
+  });
+
+  String get _effectiveKey {
+    if (isEmployee) {
+      if (statusKey == 'expired' || statusKey == 'expiring_soon') {
+        return 'disabled';
+      }
+    }
+    return statusKey;
+  }
 
   Color get _color {
-    switch (statusKey) {
+    switch (_effectiveKey) {
       case 'active':
         return AppColors.success;
       case 'suspended':
@@ -31,7 +45,8 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textKey = statusKey.startsWith('platform_type_') ? statusKey : 'status_$statusKey';
+    final key = _effectiveKey;
+    final textKey = key.startsWith('platform_type_') ? key : 'status_$key';
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(

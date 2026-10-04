@@ -19,7 +19,27 @@ class TenantEmployee extends Equatable {
     this.createdAt,
   });
 
+  String get authUid => id;
   bool get isActive => accountStatus == 'active';
+
+  TenantEmployee copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? rolePreset,
+    String? accountStatus,
+    List<String>? permissions,
+    DateTime? createdAt,
+  }) =>
+      TenantEmployee(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        email: email ?? this.email,
+        rolePreset: rolePreset ?? this.rolePreset,
+        accountStatus: accountStatus ?? this.accountStatus,
+        permissions: permissions ?? this.permissions,
+        createdAt: createdAt ?? this.createdAt,
+      );
 
   @override
   List<Object?> get props => [

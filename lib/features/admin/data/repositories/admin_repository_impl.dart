@@ -39,6 +39,62 @@ class AdminRepositoryImpl implements AdminRepository {
             permissions: permissions,
           ));
 
+  @override
+  Future<Either<Failure, TenantEmployee>> createAppEmployee({
+    required String ownerUid,
+    required String name,
+    required String email,
+    required String password,
+    required String rolePreset,
+    required List<String> permissions,
+  }) =>
+      _guard(() => _remote.createAppEmployee(
+            ownerUid: ownerUid,
+            name: name,
+            email: email,
+            password: password,
+            rolePreset: rolePreset,
+            permissions: permissions,
+          ));
+
+  @override
+  Future<Either<Failure, void>> updateAppEmployee({
+    required String ownerUid,
+    required String employeeId,
+    required String name,
+    required String rolePreset,
+    required List<String> permissions,
+  }) =>
+      _guard(() => _remote.updateAppEmployee(
+            ownerUid: ownerUid,
+            employeeId: employeeId,
+            name: name,
+            rolePreset: rolePreset,
+            permissions: permissions,
+          ));
+
+  @override
+  Future<Either<Failure, void>> toggleEmployeeStatus({
+    required String ownerUid,
+    required String employeeId,
+    required String newStatus,
+  }) =>
+      _guard(() => _remote.toggleEmployeeStatus(
+            ownerUid: ownerUid,
+            employeeId: employeeId,
+            newStatus: newStatus,
+          ));
+
+  @override
+  Future<Either<Failure, void>> deleteAppEmployee({
+    required String ownerUid,
+    required String employeeId,
+  }) =>
+      _guard(() => _remote.deleteAppEmployee(
+            ownerUid: ownerUid,
+            employeeId: employeeId,
+          ));
+
   Future<Either<Failure, T>> _guard<T>(Future<T> Function() action) async {
     try {
       return Right(await action());

@@ -7,6 +7,10 @@ import 'package:tahsel_dashboard/features/admin/presentation/screens/shell/admin
 import 'package:tahsel_dashboard/features/admin/presentation/screens/users/user_detail_screen.dart';
 import 'package:tahsel_dashboard/features/splash/splash_screen.dart';
 import 'package:tahsel_dashboard/features/standard_features/security/presentation/screens/security_warning_screen.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/app_user.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/users/create_user_screen.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/users/edit_user_screen.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/team_management/team_management_screen.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/screens/users/edit_employee_permissions_screen.dart';
 import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
@@ -19,6 +23,9 @@ class AppRoutes {
   static const String adminLogin = '/admin-login';
   static const String adminShell = '/admin';
   static const String userDetail = '/admin/user';
+  static const String createUser = '/admin/user/create';
+  static const String editUser = '/admin/user/edit';
+  static const String teamManagement = '/admin/user/team';
   static const String editEmployeePermissions = '/admin/user/employee-permissions';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -47,6 +54,26 @@ class AppRoutes {
           builder: (_) => BlocProvider(
             create: (_) => sl<UserDetailCubit>(),
             child: UserDetailScreen(uid: uid),
+          ),
+        );
+
+      case createUser:
+        return MaterialPageRoute(
+          builder: (_) => const CreateUserScreen(),
+        );
+
+      case editUser:
+        final user = settings.arguments as AppUser;
+        return MaterialPageRoute(
+          builder: (_) => EditUserScreen(user: user),
+        );
+
+      case teamManagement:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => TeamManagementScreen(
+            ownerUid: args['ownerUid'] as String,
+            ownerName: args['ownerName'] as String,
           ),
         );
 

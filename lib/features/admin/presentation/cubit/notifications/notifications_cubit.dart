@@ -1,9 +1,9 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'package:tahsel_dashboard/core/models/paginated_result.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/notifications/notifications_state.dart';
 
-class NotificationsCubit extends Cubit<NotificationsState> {
+class NotificationsCubit extends SafeCubit<NotificationsState> {
   NotificationsCubit({
     required GetNotificationsUseCase getNotifications,
     required SendNotificationUseCase sendNotification,

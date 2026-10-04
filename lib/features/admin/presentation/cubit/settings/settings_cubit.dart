@@ -1,4 +1,4 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'package:tahsel_dashboard/core/base_usecase/base_usecase.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/app_settings.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart'
@@ -6,7 +6,7 @@ import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_reposi
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/settings/settings_state.dart';
 
-class SettingsCubit extends Cubit<SettingsState> {
+class SettingsCubit extends SafeCubit<SettingsState> {
   SettingsCubit({
     required GetAppSettingsUseCase getSettings,
     required UpdateAppSettingsUseCase updateSettings,

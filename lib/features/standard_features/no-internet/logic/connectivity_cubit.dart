@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:bloc/bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'connectivity_state.dart';
 
-class ConnectivityCubit extends Cubit<ConnectivityState> {
+class ConnectivityCubit extends SafeCubit<ConnectivityState> {
   final Connectivity _connectivity;
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   Timer? _debounceTimer;

@@ -7,7 +7,7 @@ import 'package:tahsel_dashboard/core/utils/styles.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/app_user.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/users/users_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/users/users_state.dart';
-import 'package:tahsel_dashboard/features/admin/presentation/screens/users/create_user_dialog.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/users/create_user_screen.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/widgets/status_badge.dart';
 import 'package:tahsel_dashboard/routes/app_routes.dart';
 import 'package:tahsel_dashboard/shared/widgets/buttons/custom_button.dart';
@@ -58,7 +58,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
                   text: 'admin_create_user'.tr(),
                   height: 48.h,
                   icon: Icons.add,
-                  onPressed: () => _showCreateDialog(context),
+                  onPressed: () => _openCreateUserScreen(context),
                 ),
               ),
             ],
@@ -144,14 +144,11 @@ class _UsersListScreenState extends State<UsersListScreen> {
     );
   }
 
-  void _showCreateDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => BlocProvider.value(
-        value: context.read<UsersCubit>(),
-        child: const CreateUserDialog(),
-      ),
-    );
+  Future<void> _openCreateUserScreen(BuildContext context) async {
+    final created = await CreateUserScreen.push(context);
+    if (created == true && context.mounted) {
+      context.read<UsersCubit>().load(refresh: true);
+    }
   }
 }
 
@@ -170,7 +167,7 @@ class _UserTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.r),
         side: BorderSide(
           color: isEmp
-              ? const Color(0xFF673AB7).withValues(alpha: 0.35)
+              ? AppColors.primaryColor.withValues(alpha: 0.35)
               : Colors.transparent,
           width: isEmp ? 1.5 : 0,
         ),
@@ -179,16 +176,18 @@ class _UserTile extends StatelessWidget {
         leading: CircleAvatar(
           radius: 22.r,
           backgroundColor: isEmp
-              ? const Color(0xFF673AB7).withValues(alpha: 0.12)
+              ? AppColors.primaryColor.withValues(alpha: 0.12)
               : AppColors.primaryColor.withValues(alpha: 0.1),
           child: isEmp
               ? Icon(
                   Icons.badge_rounded,
-                  color: const Color(0xFF673AB7),
+                  color: AppColors.primaryColor,
                   size: 22.sp,
                 )
               : Text(
-                  user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '؟',
+                  user.fullName.isNotEmpty
+                      ? user.fullName[0].toUpperCase()
+                      : '؟',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primaryColor,
@@ -209,15 +208,12 @@ class _UserTile extends StatelessWidget {
             ),
             if (isEmp) ...[
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 8.w,
-                  vertical: 2.5.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.5.h),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF673AB7).withValues(alpha: 0.12),
+                  color: AppColors.primaryColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6.r),
                   border: Border.all(
-                    color: const Color(0xFF673AB7).withValues(alpha: 0.35),
+                    color: AppColors.primaryColor.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Row(
@@ -226,7 +222,7 @@ class _UserTile extends StatelessWidget {
                     Icon(
                       Icons.badge_outlined,
                       size: 13.sp,
-                      color: const Color(0xFF673AB7),
+                      color: AppColors.primaryColor,
                     ),
                     SizedBox(width: 4.w),
                     Text(
@@ -234,7 +230,7 @@ class _UserTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF673AB7),
+                        color: AppColors.primaryColor,
                       ),
                     ),
                   ],
@@ -258,7 +254,7 @@ class _UserTile extends StatelessWidget {
                     ? '${'employee_belongs_to'.tr()}: ${user.projectName}'
                     : '${'admin_project_name'.tr()}: ${user.projectName}',
                 style: TextStyles.font14Weight400RightAligned().copyWith(
-                  color: isEmp ? const Color(0xFF673AB7) : null,
+                  color: isEmp ? AppColors.primaryColor : null,
                   fontWeight: isEmp ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
@@ -281,7 +277,9 @@ class _UserTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12.r),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                            color: const Color(
+                              0xFFFFD700,
+                            ).withValues(alpha: 0.4),
                             blurRadius: 4,
                           ),
                         ],
@@ -308,15 +306,13 @@ class _UserTile extends StatelessWidget {
                     ),
                     SizedBox(width: 8.w),
                   ],
-                  StatusBadge(statusKey: user.accountStatus),
+                  StatusBadge(statusKey: user.accountStatus, isEmployee: isEmp),
                   if (!isEmp) ...[
                     SizedBox(width: 8.w),
                     StatusBadge(statusKey: user.subscriptionStatus),
                   ],
                   SizedBox(width: 8.w),
-                  StatusBadge(
-                    statusKey: 'platform_type_${user.platformType}',
-                  ),
+                  StatusBadge(statusKey: 'platform_type_${user.platformType}'),
                 ],
               ),
             ),
@@ -331,7 +327,7 @@ class _UserTile extends StatelessWidget {
             ],
           ],
         ),
-        trailing: const Icon(Icons.chevron_right),
+
         onTap: () => Navigator.pushNamed(
           context,
           AppRoutes.userDetail,

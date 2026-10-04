@@ -37,8 +37,9 @@ class UserAccessPolicy {
     required DateTime? subscriptionEnd,
     DateTime? now,
   }) {
+    if (subscriptionEnd == null) return false;
     final graceEnd = gracePeriodEnd(subscriptionEnd);
-    if (graceEnd == null) return true;
+    if (graceEnd == null) return false;
     return graceEnd.isBefore(now ?? DateTime.now());
   }
 
@@ -50,6 +51,7 @@ class UserAccessPolicy {
   }) {
     if (accountStatus != active) return false;
     if (subscriptionSuspended) return false;
+    if (subscriptionEnd == null) return false;
     return isGracePeriodExpired(subscriptionEnd: subscriptionEnd, now: now);
   }
 
@@ -61,6 +63,7 @@ class UserAccessPolicy {
   }) {
     if (accountStatus != active) return false;
     if (subscriptionSuspended) return false;
+    if (subscriptionEnd == null) return true;
     return !isGracePeriodExpired(subscriptionEnd: subscriptionEnd, now: now);
   }
 }

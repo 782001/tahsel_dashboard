@@ -19,12 +19,17 @@ class TenantEmployeeModel extends TenantEmployee {
         ? rawPerms.map((e) => e.toString()).toList()
         : [];
 
+    String status = data['accountStatus'] as String? ?? 'active';
+    if (status == 'expired') {
+      status = 'disabled';
+    }
+
     return TenantEmployeeModel(
       id: doc.id,
       name: data['name'] as String? ?? '',
       email: data['email'] as String? ?? '',
       rolePreset: data['rolePreset'] as String? ?? 'custom',
-      accountStatus: data['accountStatus'] as String? ?? 'active',
+      accountStatus: status,
       permissions: perms,
       createdAt: _toDate(data['createdAt']),
     );

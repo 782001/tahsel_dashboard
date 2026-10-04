@@ -1,8 +1,8 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/audit/audit_state.dart';
 
-class AuditCubit extends Cubit<AuditState> {
+class AuditCubit extends SafeCubit<AuditState> {
   AuditCubit(this._getAuditLogs) : super(AuditInitial());
 
   final GetAuditLogsUseCase _getAuditLogs;

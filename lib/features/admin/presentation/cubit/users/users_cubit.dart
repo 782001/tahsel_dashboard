@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'package:tahsel_dashboard/core/constants/admin_constants.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/users/users_state.dart';
 
-class UsersCubit extends Cubit<UsersState> {
+class UsersCubit extends SafeCubit<UsersState> {
   UsersCubit({
     required GetUsersUseCase getUsers,
     required SearchUsersUseCase searchUsers,
@@ -156,7 +156,7 @@ class UsersCubit extends Cubit<UsersState> {
   }
 }
 
-class ExpirationCubit extends Cubit<UsersState> {
+class ExpirationCubit extends SafeCubit<UsersState> {
   ExpirationCubit({
     required GetExpiringUsersUseCase getExpiring,
     required SubscriptionActionUseCase subscriptionAction,

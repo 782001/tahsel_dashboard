@@ -71,7 +71,9 @@ class _ExpirationScreenState extends State<ExpirationScreen> {
                 return Center(child: TextWidget(state.message));
               }
               if (state is UsersLoaded) {
-                if (state.users.isEmpty) {
+                final expiringUsers =
+                    state.users.where((u) => !u.isEmployee).toList();
+                if (expiringUsers.isEmpty) {
                   return Center(child: TextWidget('sorry_no_data'.tr()));
                 }
                 return NotificationListener<ScrollNotification>(
@@ -84,10 +86,10 @@ class _ExpirationScreenState extends State<ExpirationScreen> {
                   },
                   child: ListView.separated(
                     padding: EdgeInsets.all(16.w),
-                    itemCount: state.users.length + (state.hasMore ? 1 : 0),
+                    itemCount: expiringUsers.length + (state.hasMore ? 1 : 0),
                     separatorBuilder: (_, __) => SizedBox(height: 8.h),
                     itemBuilder: (context, index) {
-                      if (index >= state.users.length) {
+                      if (index >= expiringUsers.length) {
                         return Center(
                           child: Padding(
                             padding: EdgeInsets.all(16),
@@ -98,7 +100,7 @@ class _ExpirationScreenState extends State<ExpirationScreen> {
                           ),
                         );
                       }
-                      return _ExpirationTile(user: state.users[index]);
+                      return _ExpirationTile(user: expiringUsers[index]);
                     },
                   ),
                 );

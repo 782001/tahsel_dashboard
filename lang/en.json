@@ -178,5 +178,12 @@
   "active_permissions": "active permissions",
   "search_permissions": "Search permissions...",
   "employee_info": "Employee Information",
-  "permissions_matrix": "Permissions Matrix"
+  "permissions_matrix": "Permissions Matrix",
+  "change_currency": "Change Currency",
+  "select_currency": "Select Currency",
+  "select_currency_hint": "Select Account Currency",
+  "search_currency_hint": "Search by currency name...",
+  "currency_updated_success": "Application currency updated successfully",
+  "currency_label": "Currency",
+  "optional": "Optional"
 }

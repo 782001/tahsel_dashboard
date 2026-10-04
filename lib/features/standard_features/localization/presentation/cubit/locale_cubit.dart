@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'package:tahsel_dashboard/core/config/locale/app_localizations.dart';
 import 'package:tahsel_dashboard/core/utils/app_logger.dart';
 import 'package:tahsel_dashboard/core/utils/app_strings.dart';
@@ -10,7 +10,7 @@ import 'package:tahsel_dashboard/features/standard_features/localization/domain/
 
 part 'locale_state.dart';
 
-class LocaleCubit extends Cubit<LocaleState> {
+class LocaleCubit extends SafeCubit<LocaleState> {
   final GetSavedLangUseCase getSavedLangUseCase;
   final ChangeLangUseCase changeLangUseCase;
   LocaleCubit({

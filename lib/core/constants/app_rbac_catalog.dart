@@ -1,3 +1,7 @@
+import 'app_permissions.dart';
+
+export 'app_permissions.dart';
+
 class AppPermissionItem {
   final String key;
   final String titleAr;
@@ -24,369 +28,61 @@ class AppPermissionGroup {
   });
 }
 
+/// Backwards-compatible RBAC catalog mapped directly to the complete Tahsel AppPermissions.
 class AppRbacCatalog {
   AppRbacCatalog._();
 
-  static const List<AppPermissionGroup> groups = [
-    AppPermissionGroup(
-      id: 'pos',
-      titleAr: 'العمليات والبيع المباشر',
-      titleEn: 'POS & Operations',
-      items: [
-        AppPermissionItem(key: 'pos.access', titleAr: 'فتح شاشة العمليات والبيع', titleEn: 'Access POS & Operations'),
-        AppPermissionItem(key: 'pos.quick_sale', titleAr: 'البيع المباشر السريع', titleEn: 'Quick Shop Sale'),
-        AppPermissionItem(key: 'pos.manage_sessions', titleAr: 'بدء وإدارة جلسات البلايستيشن/الكافيه', titleEn: 'Manage Cafe / PS Sessions'),
-        AppPermissionItem(key: 'pos.add_debt', titleAr: 'تسجيل عملية كدين آجل', titleEn: 'Add Debt from POS'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'invoices',
-      titleAr: 'الفواتير والمبيعات',
-      titleEn: 'Invoices & Sales',
-      items: [
-        AppPermissionItem(key: 'invoices.view', titleAr: 'استعراض الفواتير وعروض الأسعار', titleEn: 'View Invoices and quotes'),
-        AppPermissionItem(key: 'invoices.create', titleAr: 'إنشاء فاتورة جديدة وعرض سعر', titleEn: 'Create Invoice and Quote'),
-        AppPermissionItem(key: 'invoices.edit', titleAr: 'تعديل الفواتير وعروض الأسعار', titleEn: 'Edit Invoices and quotes'),
-        AppPermissionItem(key: 'invoices.record_payment', titleAr: 'تسجيل وتحصيل دفعات الفاتورة', titleEn: 'Record Invoice Payment'),
-        AppPermissionItem(key: 'invoices.delete', titleAr: 'إلغاء وحذف الفواتير وعروض الأسعار (حساس)', titleEn: 'Delete / Cancel Invoices and quotes (Sensitive)'),
-        AppPermissionItem(key: 'invoices.print_share', titleAr: 'طباعة ومشاركة الفاتورة وعروض الأسعار PDF', titleEn: 'Print & Share Invoice and Quote PDF'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'expenses',
-      titleAr: 'المصروفات',
-      titleEn: 'Expenses',
-      items: [
-        AppPermissionItem(key: 'expenses.view', titleAr: 'استعراض المصروفات', titleEn: 'View Expenses'),
-        AppPermissionItem(key: 'expenses.add', titleAr: 'تسجيل وإضافة مصروف', titleEn: 'Add Expense'),
-        AppPermissionItem(key: 'expenses.delete', titleAr: 'حذف المصروفات (حساس)', titleEn: 'Delete Expenses (Sensitive)'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'customers',
-      titleAr: 'إدارة العملاء والديون',
-      titleEn: 'Customers & Debts',
-      items: [
-        AppPermissionItem(key: 'customers.view', titleAr: 'استعراض قائمة العملاء', titleEn: 'View Customers List'),
-        AppPermissionItem(key: 'customers.add', titleAr: 'إضافة وتعديل عميل', titleEn: 'Add & Edit Customer'),
-        AppPermissionItem(key: 'customers.settle_debt', titleAr: 'تسجيل سداد دين عميل', titleEn: 'Settle Customer Debt'),
-        AppPermissionItem(key: 'customers.delete_debt', titleAr: 'حذف او تعديل الديون وسجلات الدفع (حساس)', titleEn: 'Delete or Edit Debts and Payment Records (Sensitive)'),
-        AppPermissionItem(key: 'customers.send_whatsapp', titleAr: 'إرسال مطالبة بالدين عبر الواتساب', titleEn: 'Send WhatsApp Statements'),
-        AppPermissionItem(key: 'customers.view_reports', titleAr: 'استعراض كشف الحساب والتقارير', titleEn: 'View Customer Statement & Reports'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'my_debts',
-      titleAr: 'ديوني والالتزامات',
-      titleEn: 'My Debts & Liabilities',
-      items: [
-        AppPermissionItem(key: 'my_debts.view', titleAr: 'استعراض ديوني والالتزامات', titleEn: 'View my Debts & Liabilities'),
-        AppPermissionItem(key: 'my_debts.add', titleAr: 'إضافة والتزام دين عليا جديد', titleEn: 'Add my Debt'),
-        AppPermissionItem(key: 'my_debts.pay', titleAr: 'تسجيل دفعات سداد عليا', titleEn: 'Pay my Debt'),
-        AppPermissionItem(key: 'my_debts.delete', titleAr: 'حذف او تعديل ديوني وسجلات الدفع (حساس)', titleEn: 'Delete or Edit My Debts and Payment Records (Sensitive)'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'vault',
-      titleAr: 'الخزينة والصندوق النقدي',
-      titleEn: 'Cashbox & Vault',
-      items: [
-        AppPermissionItem(key: 'vault.access', titleAr: 'الوصول للخزينة والصندوق النقدي', titleEn: 'Access Vault & Cashbox'),
-        AppPermissionItem(key: 'vault.view_balance', titleAr: 'رؤية رصيد الخزينة الحالي (سري)', titleEn: 'View Current Vault Balance (Confidential)'),
-        AppPermissionItem(key: 'vault.deposit', titleAr: 'إيداع نقدي يدوي في الخزينة', titleEn: 'Manual Vault Deposit'),
-        AppPermissionItem(key: 'vault.withdraw', titleAr: 'سحب نقدي يدوي من الخزينة', titleEn: 'Manual Vault Withdrawal'),
-        AppPermissionItem(key: 'vault.view_history', titleAr: 'استعراض سجل حركات الخزينة', titleEn: 'View Vault Transaction History'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'inventory',
-      titleAr: 'المخزون والمنتجات والمشتريات',
-      titleEn: 'Inventory & Stock',
-      items: [
-        AppPermissionItem(key: 'inventory.view', titleAr: 'استعراض المخزون والمنتجات', titleEn: 'View Products & Stock'),
-        AppPermissionItem(key: 'inventory.manage_products', titleAr: 'إضافة وتعديل وحذف المنتجات والأسعار', titleEn: 'Manage Products & Prices'),
-        AppPermissionItem(key: 'inventory.manage_suppliers', titleAr: 'إدارة الموردين', titleEn: 'Manage Suppliers'),
-        AppPermissionItem(key: 'inventory.manage_purchases', titleAr: 'تسجيل فواتير الشراء والتوريد', titleEn: 'Manage Purchases'),
-        AppPermissionItem(key: 'inventory.stock_adjustments', titleAr: 'تسوية عجز وهالك وجرد المخزون', titleEn: 'Stock Adjustments & Loss'),
-        AppPermissionItem(key: 'inventory.view_analytics', titleAr: 'استعراض تحليلات المخزون والأرباح', titleEn: 'View Inventory Analytics'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'employees',
-      titleAr: 'إدارة شؤون الموظفين (HR)',
-      titleEn: 'HR & Employee Management',
-      items: [
-        AppPermissionItem(key: 'employees.view', titleAr:"استعراض سجل الموظفين واضافة وتعديل موظف", titleEn: 'View Employee Records add & edit employee'),
-        AppPermissionItem(key: 'employees.record_attendance', titleAr: 'تسجيل الحضور والانصراف', titleEn: 'Record Attendance'),
-        AppPermissionItem(key: 'employees.manage_payroll', titleAr: 'صرف الرواتب والسلفيات', titleEn: 'Manage Payroll & Advances'),
-        // AppPermissionItem(key: 'employees.manage_app_users', titleAr: 'إدارة موظفي التطبيق وصلاحياتهم (مدير)', titleEn: 'Manage App Users & Permissions'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'reports',
-      titleAr: 'التقارير المالية والأرباح',
-      titleEn: 'Financial Reports & Insights',
-      items: [
-        AppPermissionItem(key: 'reports.view_net_profit', titleAr: 'رؤية صافي الأرباح وهوامش الربح (سرية)', titleEn: 'View Net Profit & Margins (Confidential)'),
-        AppPermissionItem(key: 'reports.view_sales', titleAr: 'استعراض تقارير المبيعات والإيرادات وحصلت كام', titleEn: 'View Sales Reports and What You Collected'),
-        AppPermissionItem(key: 'reports.view_tax', titleAr: 'استعراض تقارير الضرائب والقيمة المضافة', titleEn: 'View Tax & VAT Reports'),
-        AppPermissionItem(key: 'reports.export', titleAr: 'تصدير التقارير Excel و PDF', titleEn: 'Export Reports Excel & PDF'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'shipping',
-      titleAr: 'مطابقة الشحن',
-      titleEn: 'Shipping Reconciliation',
-      items: [
-        AppPermissionItem(key: 'shipping.view', titleAr: 'رفع ومطابقة كشوف شركات الشحن', titleEn: 'Shipping Reconciliation'),
-      ],
-    ),
-    AppPermissionGroup(
-      id: 'settings',
-      titleAr: 'إعدادات المنشأة والنظام',
-      titleEn: 'Store Settings',
-      items: [
-        AppPermissionItem(key: 'settings.edit_profile', titleAr: 'تعديل بيانات المنشأة وطرق الطباعة', titleEn: 'Edit Business'),
-        AppPermissionItem(key: 'settings.manage_subscription', titleAr: 'الاطلاع على الباقة والاشتراك', titleEn: 'View Subscription'),
-        AppPermissionItem(key: 'settings.delete_account', titleAr: 'طلب حذف الحساب والبيانات', titleEn: 'Delete Account'),
-      ],
-    ),
-  ];
+  static const String roleCashier = AppPermissions.roleCashier;
+  static const String roleStorekeeper = AppPermissions.roleStorekeeper;
+  static const String roleAccountant = AppPermissions.roleAccountant;
+  static const String roleSupervisor = AppPermissions.roleSupervisor;
+  static const String roleCustom = AppPermissions.roleCustom;
 
-  static int get totalPermissions =>
-      groups.fold<int>(0, (sum, group) => sum + group.items.length);
+  static List<AppPermissionGroup> get groups => AppPermissions.allGroups
+      .map(
+        (g) => AppPermissionGroup(
+          id: g.id,
+          titleAr: g.titleAr,
+          titleEn: g.titleEn,
+          items: g.items
+              .map(
+                (i) => AppPermissionItem(
+                  key: i.key,
+                  titleAr: i.titleAr,
+                  titleEn: i.titleEn,
+                ),
+              )
+              .toList(),
+        ),
+      )
+      .toList();
 
-  /// Mapping of action/sub-permissions to their mandatory prerequisite permissions.
-  static const Map<String, List<String>> permissionDependencies = {
-    // POS
-    'pos.quick_sale': ['pos.access'],
-    'pos.manage_sessions': ['pos.access'],
-    'pos.add_debt': ['pos.access', 'customers.view'],
+  static int get totalPermissions => AppPermissions.totalPermissions;
 
-    // Invoices
-    'invoices.create': ['invoices.view'],
-    'invoices.edit': ['invoices.view'],
-    'invoices.record_payment': ['invoices.view'],
-    'invoices.delete': ['invoices.view'],
-    'invoices.print_share': ['invoices.view'],
+  static const Map<String, List<String>> permissionDependencies =
+      AppPermissions.permissionDependencies;
 
-    // Expenses
-    'expenses.add': ['expenses.view'],
-    'expenses.delete': ['expenses.view'],
+  static Set<String> getPrerequisites(String permission) =>
+      AppPermissions.getPrerequisites(permission);
 
-    // Customers
-    'customers.add': ['customers.view'],
-    'customers.settle_debt': ['customers.view'],
-    'customers.delete_debt': ['customers.view'],
-    'customers.send_whatsapp': ['customers.view'],
-    'customers.view_reports': ['customers.view'],
+  static Set<String> getDependents(String permission) =>
+      AppPermissions.getDependents(permission);
 
-    // My Debts
-    'my_debts.add': ['my_debts.view'],
-    'my_debts.pay': ['my_debts.view'],
-    'my_debts.delete': ['my_debts.view'],
+  static Set<String> resolveDependencies(Iterable<String> permissions) =>
+      AppPermissions.resolveDependencies(permissions);
 
-    // Vault
-    'vault.view_balance': ['vault.access'],
-    'vault.deposit': ['vault.access'],
-    'vault.withdraw': ['vault.access'],
-    'vault.view_history': ['vault.access'],
+  static List<String> permissionsForPreset(String preset, {bool isShop = true}) =>
+      AppPermissions.permissionsForPreset(preset, isShop: isShop);
 
-    // Inventory
-    'inventory.manage_products': ['inventory.view'],
-    'inventory.manage_suppliers': ['inventory.view'],
-    'inventory.manage_purchases': ['inventory.view'],
-    'inventory.stock_adjustments': ['inventory.view'],
-    'inventory.view_analytics': ['inventory.view'],
+  static String getRoleLabel(String preset) =>
+      AppPermissions.getRoleLabel(preset);
 
-    // Employees / HR
-    'employees.record_attendance': ['employees.view'],
-    'employees.manage_payroll': ['employees.view'],
+  static bool hasPrerequisites(String permission) =>
+      AppPermissions.hasPrerequisites(permission);
 
-    // Reports
-    'reports.export': ['reports.view_sales'],
-  };
+  static String getPermissionLabel(String key, {bool isArabic = true}) =>
+      AppPermissions.getPermissionLabel(key, isArabic: isArabic);
 
-  /// Returns all direct and indirect prerequisites required by [permission].
-  static Set<String> getPrerequisites(String permission) {
-    final result = <String>{};
-    void addReqs(String p) {
-      final reqs = permissionDependencies[p];
-      if (reqs != null) {
-        for (final req in reqs) {
-          if (result.add(req)) {
-            addReqs(req);
-          }
-        }
-      }
-    }
-    addReqs(permission);
-    return result;
-  }
-
-  /// Returns all permissions that directly or indirectly depend on [permission].
-  static Set<String> getDependents(String permission) {
-    final result = <String>{};
-    void addDeps(String p) {
-      for (final entry in permissionDependencies.entries) {
-        if (entry.value.contains(p)) {
-          if (result.add(entry.key)) {
-            addDeps(entry.key);
-          }
-        }
-      }
-    }
-    addDeps(permission);
-    return result;
-  }
-
-  /// Resolves an iterable of permissions by including all their prerequisites.
-  static Set<String> resolveDependencies(Iterable<String> permissions) {
-    final resolved = Set<String>.from(permissions);
-    for (final perm in permissions) {
-      resolved.addAll(getPrerequisites(perm));
-    }
-    return resolved;
-  }
-
-  // ── Role Presets ──────────────────────────────────────────────────
-  static const String roleCashier = 'cashier';
-  static const String roleStorekeeper = 'storekeeper';
-  static const String roleAccountant = 'accountant';
-  static const String roleSupervisor = 'supervisor';
-  static const String roleCustom = 'custom';
-
-  static List<String> permissionsForPreset(String preset) {
-    switch (preset) {
-      case roleCashier:
-        return [
-          'pos.access',
-          'pos.quick_sale',
-          'pos.manage_sessions',
-          'pos.add_debt',
-          'invoices.view',
-          'invoices.create',
-          'invoices.record_payment',
-          'invoices.print_share',
-          'customers.view',
-          'customers.add',
-          'customers.settle_debt',
-          'inventory.view',
-        ];
-      case roleStorekeeper:
-        return [
-          'inventory.view',
-          'inventory.manage_products',
-          'inventory.manage_suppliers',
-          'inventory.manage_purchases',
-          'inventory.stock_adjustments',
-          'my_debts.view',
-          'my_debts.add',
-        ];
-      case roleAccountant:
-        return [
-          'invoices.view',
-          'invoices.create',
-          'invoices.edit',
-          'invoices.record_payment',
-          'invoices.print_share',
-          'expenses.view',
-          'expenses.add',
-          'customers.view',
-          'customers.add',
-          'customers.settle_debt',
-          'customers.view_reports',
-          'my_debts.view',
-          'my_debts.add',
-          'my_debts.pay',
-          'vault.access',
-          'vault.view_balance',
-          'vault.deposit',
-          'vault.withdraw',
-          'vault.view_history',
-          'reports.view_sales',
-          'reports.view_tax',
-          'reports.export',
-          'shipping.view',
-        ];
-      case roleSupervisor:
-        return [
-          'pos.access',
-          'pos.quick_sale',
-          'pos.manage_sessions',
-          'pos.add_debt',
-          'invoices.view',
-          'invoices.create',
-          'invoices.edit',
-          'invoices.record_payment',
-          'invoices.delete',
-          'invoices.print_share',
-          'expenses.view',
-          'expenses.add',
-          'customers.view',
-          'customers.add',
-          'customers.settle_debt',
-          'customers.delete_debt',
-          'customers.send_whatsapp',
-          'customers.view_reports',
-          'my_debts.view',
-          'my_debts.add',
-          'my_debts.pay',
-          'vault.access',
-          'vault.view_balance',
-          'vault.deposit',
-          'vault.withdraw',
-          'vault.view_history',
-          'inventory.view',
-          'inventory.manage_products',
-          'inventory.manage_suppliers',
-          'inventory.manage_purchases',
-          'inventory.stock_adjustments',
-          'employees.view',
-          'employees.record_attendance',
-          'shipping.view',
-        ];
-      default:
-        return [];
-    }
-  }
-
-  static String getRoleLabel(String preset) {
-    switch (preset) {
-      case roleCashier:
-        return 'كاشير (نقطة البيع)';
-      case roleStorekeeper:
-        return 'أمين مخزن ومشتريات';
-      case roleAccountant:
-        return 'محاسب مالي';
-      case roleSupervisor:
-        return 'مشرف عام للعمليات';
-      case roleCustom:
-        return 'مخصص';
-      default:
-        return preset;
-    }
-  }
-
-  static bool hasPrerequisites(String permission) {
-    final reqs = permissionDependencies[permission];
-    return reqs != null && reqs.isNotEmpty;
-  }
-
-  static String getPermissionLabel(String key, {bool isArabic = true}) {
-    for (final group in groups) {
-      for (final item in group.items) {
-        if (item.key == key) {
-          return isArabic ? item.titleAr : item.titleEn;
-        }
-      }
-    }
-    return key;
-  }
-
-  static String getPrerequisiteLabels(String permission, {bool isArabic = true}) {
-    final direct = permissionDependencies[permission];
-    if (direct == null || direct.isEmpty) return '';
-    return direct.map((k) => getPermissionLabel(k, isArabic: isArabic)).join('، ');
-  }
+  static String getPrerequisiteLabels(String permission, {bool isArabic = true}) =>
+      AppPermissions.getPrerequisiteLabels(permission, isArabic: isArabic);
 }

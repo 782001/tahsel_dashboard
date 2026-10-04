@@ -136,6 +136,10 @@ class AppColors {
     blurRadius: 10,
     offset: Offset(0, 4),
   );
+  static Color get lightGreyColor =>
+      isDark ? const Color(0xFF333333) : const Color(0xFFE0E0E0);
+  static const Color vipGoldStart = Color(0xFFFFD700);
+  static const Color vipGoldEnd = Color(0xFFFFA500);
   static Color whiteOpacity(double opacity) {
     return Colors.white.withValues(alpha: opacity);
   }

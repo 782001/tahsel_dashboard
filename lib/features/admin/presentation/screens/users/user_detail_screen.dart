@@ -4,8 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel_dashboard/core/constants/admin_constants.dart';
 import 'package:tahsel_dashboard/core/extensions/string_extensions.dart';
+import 'package:tahsel_dashboard/core/services/currency/data/world_currencies.dart';
 import 'package:tahsel_dashboard/core/utils/app_colors.dart';
 import 'package:tahsel_dashboard/core/utils/app_logger.dart';
+import 'package:tahsel_dashboard/core/utils/app_strings.dart';
 import 'package:tahsel_dashboard/core/utils/styles.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/user_detail/user_detail_cubit.dart';
@@ -14,9 +16,13 @@ import 'package:tahsel_dashboard/features/admin/presentation/widgets/copy_uid_bu
 import 'package:tahsel_dashboard/features/admin/presentation/widgets/custom_days_dialog.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/widgets/status_badge.dart';
 import 'package:tahsel_dashboard/shared/widgets/buttons/custom_button.dart';
+import 'package:tahsel_dashboard/shared/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:tahsel_dashboard/shared/widgets/fields/text_widget.dart';
 import 'package:tahsel_dashboard/shared/widgets/toast/custom_toast.dart';
-import 'package:tahsel_dashboard/features/admin/presentation/screens/users/edit_employee_permissions_screen.dart';
+import 'package:tahsel_dashboard/features/admin/domain/entities/app_user.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/users/edit_user_screen.dart';
+import 'package:tahsel_dashboard/features/admin/presentation/screens/team_management/team_management_screen.dart';
+import 'package:tahsel_dashboard/routes/app_routes.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final String uid;
@@ -37,9 +43,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
-      appBar: AppBar(
-        title: TextWidget('admin_user_details'.tr()),
-        backgroundColor: AppColors.surface,
+      appBar: CustomAppBar(
+        centerTitle: 'admin_user_details'.tr(),
+        leadingIcon: const Icon(Icons.arrow_back_ios_new_rounded),
+        onLeadingTap: () => Navigator.pop(context),
       ),
       body: BlocBuilder<UserDetailCubit, UserDetailState>(
         builder: (context, state) {
@@ -89,8 +96,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               borderRadius: BorderRadius.circular(16.r),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFFFD700)
-                                      .withValues(alpha: 0.4),
+                                  color: const Color(
+                                    0xFFFFD700,
+                                  ).withValues(alpha: 0.4),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -102,7 +110,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                 const Icon(
                                   Icons.workspace_premium_rounded,
                                   size: 15,
-                                  color: Colors.white,
+                                  color: Colors.black87,
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
@@ -110,7 +118,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: Colors.black87,
                                   ),
                                 ),
                               ],
@@ -118,7 +126,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           ),
                           SizedBox(width: 8.w),
                         ],
-                        StatusBadge(statusKey: user.accountStatus),
+                        StatusBadge(
+                          statusKey: user.accountStatus,
+                          isEmployee: user.isEmployee,
+                        ),
                       ],
                     ),
                     SizedBox(height: 8.h),
@@ -129,7 +140,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     ),
                     _infoRow(
                       'admin_current_status'.tr(),
-                      'status_${user.accountStatus}'.tr(),
+                      (user.isEmployee && user.accountStatus == 'expired')
+                          ? 'status_disabled'.tr()
+                          : 'status_${user.accountStatus}'.tr(),
                     ),
                     _infoRow(
                       'email_address'.tr(),
@@ -181,6 +194,15 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       _infoRow('admin_tax_rate'.tr(), '${user.taxRate}%'),
                     if (user.address != null && user.address!.isNotEmpty)
                       _infoRow('admin_address'.tr(), user.address!),
+                    if (user.currency != null && user.currency!.isNotEmpty) ...[
+                      () {
+                        final c = WorldCurrencies.findByCode(user.currency!);
+                        return _infoRow(
+                          AppStrings.currencyLabel.tr(),
+                          '${c.getName(AppStrings.currentLang)} (${c.getSymbol(AppStrings.currentLang)} - ${c.code})',
+                        );
+                      }(),
+                    ],
                     _infoRow(
                       'admin_created'.tr(),
                       user.createdAt != null ? df.format(user.createdAt!) : '-',
@@ -201,7 +223,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         user.devicePlatform!,
                       ),
                   ]),
-                  _section('admin_subscription'.tr(), [
+                  if (!user.isEmployee)
+                    _section('admin_subscription'.tr(), [
                     Row(
                       children: [
                         StatusBadge(statusKey: user.subscriptionStatus),
@@ -266,147 +289,370 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     ),
                   ]),
                   _section('admin_usage_stats'.tr(), [_statsGrid(user)]),
-                  _section('admin_team_members'.tr(), [
-                    if (state.employees.isEmpty)
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                        child: TextWidget('admin_no_employees_yet'.tr()),
-                      )
-                    else
-                      ...state.employees.map(
-                        (emp) => Card(
-                          margin: EdgeInsets.only(bottom: 8.h),
-                          color: AppColors.scafoldBackGround,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                            side: BorderSide(
-                              color: AppColors.primaryColor.withValues(alpha: 0.15),
+                  if (user.isEmployee)
+                    _section('admin_team_members'.tr(), [
+                      Builder(
+                        builder: (context) {
+                          final employeeColor = AppColors.isDark
+                              ? const Color(0xFFB39DDB)
+                              : const Color(0xFF673AB7);
+                          return Container(
+                            padding: EdgeInsets.all(16.w),
+                            decoration: BoxDecoration(
+                              color: employeeColor.withValues(
+                                alpha: AppColors.isDark ? 0.12 : 0.08,
+                              ),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: employeeColor.withValues(
+                                  alpha: AppColors.isDark ? 0.35 : 0.25,
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(12.w),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                CircleAvatar(
-                                  radius: 18.r,
-                                  backgroundColor: AppColors.primaryColor.withValues(alpha: 0.1),
-                                  child: Text(
-                                    emp.name.isNotEmpty ? emp.name[0].toUpperCase() : '؟',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primaryColor,
-                                      fontSize: 14.sp,
+                                Container(
+                                  padding: EdgeInsets.all(8.w),
+                                  decoration: BoxDecoration(
+                                    color: employeeColor.withValues(
+                                      alpha: AppColors.isDark ? 0.2 : 0.15,
                                     ),
+                                    borderRadius: BorderRadius.circular(10.r),
+                                  ),
+                                  child: Icon(
+                                    Icons.badge_outlined,
+                                    color: employeeColor,
+                                    size: 26.sp,
                                   ),
                                 ),
-                                SizedBox(width: 12.w),
+                                SizedBox(width: 14.w),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Wrap(
-                                        spacing: 8.w,
-                                        runSpacing: 4.h,
-                                        crossAxisAlignment: WrapCrossAlignment.center,
-                                        children: [
-                                          TextWidget(
-                                            emp.name,
-                                            style: TextStyles.font14Weight400RightAligned().copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 8.w,
-                                              vertical: 2.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primaryColor.withValues(alpha: 0.12),
-                                              borderRadius: BorderRadius.circular(6.r),
-                                            ),
-                                            child: TextWidget(
-                                              emp.rolePreset,
-                                              style: TextStyle(
-                                                fontSize: 11.sp,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.primaryColor,
-                                              ),
-                                            ),
-                                          ),
-                                          StatusBadge(statusKey: emp.accountStatus),
-                                        ],
-                                      ),
-                                      SizedBox(height: 4.h),
                                       TextWidget(
-                                        emp.email,
-                                        style: TextStyles.font14Weight400RightAligned().copyWith(
-                                          color: AppColors.subTitleColor,
-                                          fontSize: 12.sp,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                        'حساب موظف (تابع لمنشأة)',
+                                        style: TextStyles.font16WeightBoldText()
+                                            .copyWith(color: employeeColor),
                                       ),
+                                      SizedBox(height: 6.h),
+                                      TextWidget(
+                                        'هذا الحساب مسجل كموظف ضمن فريق العمل، ولا يمكن إضافة موظفين لحساب موظف. ميزة إدارة وإضافة الموظفين متاحة لحسابات المالك فقط.',
+                                        style:
+                                            TextStyles.font14Weight400RightAligned()
+                                                .copyWith(
+                                                  color:
+                                                      AppColors.subTitleColor,
+                                                ),
+                                      ),
+                                      if (user.ownerUid != null &&
+                                          user.ownerUid!.isNotEmpty) ...[
+                                        SizedBox(height: 12.h),
+                                        ElevatedButton.icon(
+                                          onPressed: () => Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.userDetail,
+                                            arguments: user.ownerUid!,
+                                          ),
+                                          icon: const Icon(
+                                            Icons.storefront_rounded,
+                                            size: 16,
+                                          ),
+                                          label: TextWidget(
+                                            'الانتقال لحساب المالك الرئيسي',
+                                            style: TextStyles.customStyle(
+                                              fontSize: 12,
+                                              color: AppColors.white,
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: employeeColor,
+                                            foregroundColor: AppColors.isDark
+                                                ? Colors.black87
+                                                : Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.r),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
-                                  ),
-                                ),
-                                OutlinedButton.icon(
-                                  onPressed: () async {
-                                    final cubit = context.read<UserDetailCubit>();
-                                    final updated =
-                                        await EditEmployeePermissionsScreen.push(
-                                      context,
-                                      ownerUid: widget.uid,
-                                      employee: emp,
-                                    );
-                                    if (updated == true && mounted) {
-                                      cubit.load(widget.uid);
-                                    }
-                                  },
-                                  icon: const Icon(Icons.shield_outlined, size: 16),
-                                  label: TextWidget(
-                                    '${emp.permissions.length} ${'admin_permissions_count'.tr()}',
-                                    style: TextStyle(fontSize: 12.sp),
                                   ),
                                 ),
                               ],
                             ),
+                          );
+                        },
+                      ),
+                    ])
+                  else
+                    _section(
+                      'admin_team_members'.tr(),
+                      [
+                        if (state.employees.isEmpty)
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.group_outlined,
+                                    size: 40.sp,
+                                    color: AppColors.subTitleColor.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  TextWidget(
+                                    'admin_no_employees_yet'.tr(),
+                                    style:
+                                        TextStyles.font14Weight400RightAligned()
+                                            .copyWith(
+                                              color: AppColors.subTitleColor,
+                                            ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      await TeamManagementScreen.push(
+                                        context,
+                                        ownerUid: widget.uid,
+                                        ownerName: user.fullName,
+                                        ownerUserType: user.userType,
+                                      );
+                                      if (context.mounted) {
+                                        context.read<UserDetailCubit>().load(
+                                          widget.uid,
+                                        );
+                                      }
+                                    },
+                                    icon: const Icon(
+                                      Icons.group_add_rounded,
+                                      size: 18,
+                                    ),
+                                    label: const TextWidget(
+                                      'إدارة وإضافة أعضاء الفريق',
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryColor,
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 10.h,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          10.r,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          ...state.employees.map(
+                            (emp) => InkWell(
+                              borderRadius: BorderRadius.circular(10.r),
+                              onTap: () async {
+                                await TeamManagementScreen.push(
+                                  context,
+                                  ownerUid: widget.uid,
+                                  ownerName: user.fullName,
+                                  ownerUserType: user.userType,
+                                );
+                                if (context.mounted) {
+                                  context.read<UserDetailCubit>().load(
+                                    widget.uid,
+                                  );
+                                }
+                              },
+                              child: Card(
+                                margin: EdgeInsets.only(bottom: 8.h),
+                                color: AppColors.scafoldBackGround,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  side: BorderSide(
+                                    color: AppColors.primaryColor.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(12.w),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 18.r,
+                                        backgroundColor: AppColors.primaryColor
+                                            .withValues(alpha: 0.1),
+                                        child: Text(
+                                          emp.name.isNotEmpty
+                                              ? emp.name[0].toUpperCase()
+                                              : '؟',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primaryColor,
+                                            fontSize: 14.sp,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 12.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Wrap(
+                                              spacing: 8.w,
+                                              runSpacing: 4.h,
+                                              crossAxisAlignment:
+                                                  WrapCrossAlignment.center,
+                                              children: [
+                                                TextWidget(
+                                                  emp.name,
+                                                  style:
+                                                      TextStyles.font14Weight400RightAligned()
+                                                          .copyWith(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 8.w,
+                                                    vertical: 2.h,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors
+                                                        .primaryColor
+                                                        .withValues(
+                                                          alpha: 0.12,
+                                                        ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6.r,
+                                                        ),
+                                                  ),
+                                                  child: TextWidget(
+                                                    emp.rolePreset,
+                                                    style: TextStyle(
+                                                      fontSize: 11.sp,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: AppColors
+                                                          .primaryColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                                StatusBadge(
+                                                  statusKey: emp.accountStatus,
+                                                  isEmployee: true,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            TextWidget(
+                                              emp.email,
+                                              style:
+                                                  TextStyles.font14Weight400RightAligned()
+                                                      .copyWith(
+                                                        color: AppColors
+                                                            .subTitleColor,
+                                                        fontSize: 12.sp,
+                                                      ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 14.sp,
+                                        color: AppColors.subTitleColor
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                      trailing: ElevatedButton.icon(
+                        onPressed: () async {
+                          await TeamManagementScreen.push(
+                            context,
+                            ownerUid: widget.uid,
+                            ownerName: user.fullName,
+                            ownerUserType: user.userType,
+                          );
+                          if (context.mounted) {
+                            context.read<UserDetailCubit>().load(widget.uid);
+                          }
+                        },
+                        icon: const Icon(Icons.group_rounded, size: 18),
+                        label: TextWidget(
+                          'إدارة فريق العمل',
+                          style: TextStyles.customStyle(
+                            fontSize: 12,
+                            color: AppColors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 8.h,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
                           ),
                         ),
                       ),
-                  ]),
-                  _section('admin_sessions'.tr(), [
-                    if (state.sessions.isEmpty)
-                      TextWidget('no_data'.tr())
-                    else
-                      ...state.sessions.map(
-                        (s) => ListTile(
-                          title: TextWidget(s.platform),
-                          subtitle: TextWidget(
-                            s.lastActive != null
-                                ? df.format(s.lastActive!)
-                                : '-',
-                          ),
-                          trailing: s.active
-                              ? Icon(
-                                  Icons.circle,
-                                  color: AppColors.success,
-                                  size: 10.sp,
-                                )
-                              : null,
-                        ),
-                      ),
-                    CustomButton(
-                      text: 'admin_force_logout'.tr(),
-                      width: 200.w,
-                      onPressed: () async {
-                        final cubit = context.read<UserDetailCubit>();
-                        final ok = await cubit.forceLogout();
-                        if (!mounted) return;
-                        if (ok) {
-                          showSuccessToast('admin_force_logout_success'.tr());
-                        }
-                      },
                     ),
-                  ]),
+                  // _section('admin_sessions'.tr(), [
+                  //   if (state.sessions.isEmpty)
+                  //     TextWidget('no_data'.tr())
+                  //   else
+                  //     ...state.sessions.map(
+                  //       (s) => ListTile(
+                  //         title: TextWidget(s.platform),
+                  //         subtitle: TextWidget(
+                  //           s.lastActive != null
+                  //               ? df.format(s.lastActive!)
+                  //               : '-',
+                  //         ),
+                  //         trailing: s.active
+                  //             ? Icon(
+                  //                 Icons.circle,
+                  //                 color: AppColors.success,
+                  //                 size: 10.sp,
+                  //               )
+                  //             : null,
+                  //       ),
+                  //     ),
+                  //   CustomButton(
+                  //     text: 'admin_force_logout'.tr(),
+                  //     width: 200.w,
+                  //     onPressed: () async {
+                  //       final cubit = context.read<UserDetailCubit>();
+                  //       final ok = await cubit.forceLogout();
+                  //       if (!mounted) return;
+                  //       if (ok) {
+                  //         showSuccessToast('admin_force_logout_success'.tr());
+                  //       }
+                  //     },
+                  //   ),
+                  // ]),
                   _section('admin_notes'.tr(), [
                     ...state.notes.map(
                       (n) => Card(
@@ -439,7 +685,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       label: TextWidget('admin_add_note'.tr()),
                     ),
                   ]),
-                  _section('admin_actions'.tr(), [
+                  if (!user.isEmployee)
+                    _section('admin_actions'.tr(), [
                     Wrap(
                       spacing: 8.w,
                       runSpacing: 8.h,
@@ -528,13 +775,26 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
   }
 
-  Widget _section(String title, List<Widget> children) {
+  Widget _section(String title, List<Widget> children, {Widget? trailing}) {
     return Padding(
       padding: EdgeInsets.only(bottom: 20.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextWidget(title, style: TextStyles.font18Weight500Action()),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: TextWidget(
+                  title,
+                  style: TextStyles.font18Weight500Action(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (trailing != null) ...[SizedBox(width: 8.w), trailing],
+            ],
+          ),
           SizedBox(height: 12.h),
           Container(
             width: double.infinity,
@@ -670,120 +930,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     }
   }
 
-  Future<void> _editUser(dynamic user) async {
-    final nameController = TextEditingController(text: user.fullName);
-    final emailController = TextEditingController(text: user.email);
-    final phoneController = TextEditingController(text: user.phoneNumber);
-    String selectedUserType = user.userType;
-    String selectedPlatformType = user.platformType;
-    bool selectedIsVip = user.isVip;
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: TextWidget('admin_edit_user'.tr()),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'admin_full_name'.tr()),
-              ),
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(labelText: 'email_address'.tr()),
-              ),
-              TextField(
-                controller: phoneController,
-                decoration: InputDecoration(labelText: 'customer_phone'.tr()),
-              ),
-              SizedBox(height: 12.h),
-              DropdownButtonFormField<String>(
-                initialValue: selectedUserType,
-                decoration: InputDecoration(labelText: 'admin_user_type'.tr()),
-                items: [
-                  DropdownMenuItem(
-                    value: 'cafe',
-                    child: TextWidget('user_type_cafe'.tr()),
-                  ),
-                  DropdownMenuItem(
-                    value: 'shop',
-                    child: TextWidget('user_type_shop'.tr()),
-                  ),
-                ],
-                onChanged: (v) =>
-                    setState(() => selectedUserType = v ?? 'cafe'),
-              ),
-              SizedBox(height: 12.h),
-              DropdownButtonFormField<String>(
-                initialValue: selectedPlatformType,
-                decoration: InputDecoration(
-                  labelText: 'admin_platform_type'.tr(),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: 'mobile',
-                    child: TextWidget('platform_type_mobile'.tr()),
-                  ),
-                  DropdownMenuItem(
-                    value: 'desktop',
-                    child: TextWidget('platform_type_desktop'.tr()),
-                  ),
-                  DropdownMenuItem(
-                    value: 'both',
-                    child: TextWidget('platform_type_both'.tr()),
-                  ),
-                ],
-                onChanged: (v) =>
-                    setState(() => selectedPlatformType = v ?? 'mobile'),
-              ),
-              SizedBox(height: 12.h),
-              SwitchListTile(
-                title: const Text('VIP Account'),
-                subtitle: Text(selectedIsVip ? '☑ Enabled' : '☐ Disabled'),
-                secondary: const Icon(Icons.workspace_premium_rounded, color: Colors.amber),
-                value: selectedIsVip,
-                activeThumbColor: Colors.amber,
-                onChanged: (val) => setState(() => selectedIsVip = val),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: TextWidget('cancel'.tr()),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: TextWidget('confirm'.tr()),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (result == true && mounted) {
-      final cubit = context.read<UserDetailCubit>();
-      final ok = await cubit.updateUser(
-        UpdateUserParams(
-          uid: widget.uid,
-          fullName: nameController.text.trim(),
-          email: emailController.text.trim(),
-          phoneNumber: phoneController.text.trim(),
-          userType: selectedUserType,
-          platformType: selectedPlatformType,
-          isVip: selectedIsVip,
-        ),
-      );
-      nameController.dispose();
-      emailController.dispose();
-      phoneController.dispose();
-      if (ok && mounted) {
-        showSuccessToast('admin_user_updated'.tr());
-      }
-    } else {
-      nameController.dispose();
-      emailController.dispose();
-      phoneController.dispose();
+  Future<void> _editUser(AppUser user) async {
+    final updated = await EditUserScreen.push(context, user: user);
+    if (updated == true && mounted) {
+      context.read<UserDetailCubit>().load(widget.uid);
     }
   }
 

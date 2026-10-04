@@ -1,8 +1,8 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/user_detail/user_detail_state.dart';
 
-class UserDetailCubit extends Cubit<UserDetailState> {
+class UserDetailCubit extends SafeCubit<UserDetailState> {
   UserDetailCubit({
     required GetUserByIdUseCase getUser,
     required GetUserNotesUseCase getNotes,
@@ -50,29 +50,46 @@ class UserDetailCubit extends Cubit<UserDetailState> {
 
   Future<void> load(String uid) async {
     _uid = uid;
+    if (isClosed) return;
     emit(UserDetailLoading());
     final userResult = await _getUser(uid);
+    if (isClosed) return;
     await userResult.fold(
-      (f) async => emit(UserDetailError(f.message)),
+      (f) async {
+        if (!isClosed) emit(UserDetailError(f.message));
+      },
       (user) async {
+        if (isClosed) return;
         final notesResult = await _getNotes(NotesParams(uid: uid));
+        if (isClosed) return;
         final sessionsResult = await _getSessions(uid);
+        if (isClosed) return;
         final employeesResult = await _getEmployees(uid);
+        if (isClosed) return;
         final employees = employeesResult.getOrElse(() => []);
 
         notesResult.fold(
-          (f) => emit(UserDetailError(f.message)),
+          (f) {
+            if (!isClosed) emit(UserDetailError(f.message));
+          },
           (notesPage) {
+            if (isClosed) return;
             sessionsResult.fold(
-              (f) => emit(UserDetailError(f.message)),
-              (sessions) => emit(UserDetailLoaded(
-                user: user,
-                notes: notesPage.items,
-                sessions: sessions,
-                employees: employees,
-                notesHasMore: notesPage.hasMore,
-                notesCursor: notesPage.lastCursor,
-              )),
+              (f) {
+                if (!isClosed) emit(UserDetailError(f.message));
+              },
+              (sessions) {
+                if (!isClosed) {
+                  emit(UserDetailLoaded(
+                    user: user,
+                    notes: notesPage.items,
+                    sessions: sessions,
+                    employees: employees,
+                    notesHasMore: notesPage.hasMore,
+                    notesCursor: notesPage.lastCursor,
+                  ));
+                }
+              },
             );
           },
         );

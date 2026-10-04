@@ -22,6 +22,7 @@ import 'package:tahsel_dashboard/features/admin/domain/services/user_access_poli
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_note.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/user_session.dart';
 import 'package:tahsel_dashboard/features/admin/domain/entities/tenant_employee.dart';
+import 'package:tahsel_dashboard/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel_dashboard/features/admin/domain/repositories/admin_repository.dart'
     show ReleasePlatform;
 
@@ -64,6 +65,30 @@ abstract class AdminRemoteDataSource {
     required String employeeId,
     required String rolePreset,
     required List<String> permissions,
+  });
+  Future<TenantEmployee> createAppEmployee({
+    required String ownerUid,
+    required String name,
+    required String email,
+    required String password,
+    required String rolePreset,
+    required List<String> permissions,
+  });
+  Future<void> updateAppEmployee({
+    required String ownerUid,
+    required String employeeId,
+    required String name,
+    required String rolePreset,
+    required List<String> permissions,
+  });
+  Future<void> toggleEmployeeStatus({
+    required String ownerUid,
+    required String employeeId,
+    required String newStatus,
+  });
+  Future<void> deleteAppEmployee({
+    required String ownerUid,
+    required String employeeId,
   });
   Future<AppSettings> getAppSettings();
   Future<PaginatedResult<BroadcastNotification>> getNotifications({
@@ -161,6 +186,29 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     if (!doc.exists) return doc;
 
     final data = doc.data() ?? {};
+    final role = data['role'] as String?;
+    final ownerUid = data['ownerUid'] as String?;
+    final isEmployee = role == 'employee' || (ownerUid != null && ownerUid.isNotEmpty);
+
+    // Employees belong to a store/owner and never have independent subscriptions.
+    if (isEmployee) {
+      // Auto-heal any employee previously mislabeled as expired
+      if (data['accountStatus'] == UserAccessPolicy.expired ||
+          (data['accountStatus'] == UserAccessPolicy.disabled &&
+              data['authAccessReason'] == 'grace_period_expired')) {
+        await _userRef(doc.id).update({
+          'accountStatus': UserAccessPolicy.active,
+          'loginAllowed': true,
+          'authAccessRevoked': false,
+          'authAccessReason': null,
+          'subscriptionStatus': 'active',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        return doc.reference.get();
+      }
+      return doc;
+    }
+
     final accountStatus = data['accountStatus'] as String? ?? UserAccessPolicy.active;
     final subscriptionSuspended = data['subscriptionSuspended'] == true;
     final subscriptionEnd = _toDate(data['subscriptionEnd']);
@@ -370,11 +418,12 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     final snap = await query.limit(limit + 1).get();
     final docs = snap.docs;
     final hasMore = docs.length > limit;
-    final items = await Future.wait(
-      docs.take(limit).map((doc) async {
+    final allUsers = await Future.wait(
+      docs.map((doc) async {
         return AppUserModel.fromFirestore(await _enforceAccessPolicy(doc));
       }),
     );
+    final items = allUsers.where((u) => !u.isEmployee).take(limit).toList();
     return PaginatedResult(
       items: items,
       hasMore: hasMore,
@@ -527,6 +576,246 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
   }
 
   @override
+  Future<TenantEmployee> createAppEmployee({
+    required String ownerUid,
+    required String name,
+    required String email,
+    required String password,
+    required String rolePreset,
+    required List<String> permissions,
+  }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersWrite);
+
+    // 1. Fetch owner user details to inherit store info
+    final ownerSnap = await _userRef(ownerUid).get();
+    if (!ownerSnap.exists) throw Exception('Owner user not found');
+    final ownerData = ownerSnap.data()!;
+    final ownerRole = ownerData['role'] as String? ?? 'owner';
+    final isOwnerEmployee = ownerRole == 'employee' ||
+        (ownerData['ownerUid'] != null && (ownerData['ownerUid'] as String).isNotEmpty);
+    if (isOwnerEmployee) {
+      throw Exception('لا يمكن إضافة موظفين لحساب موظف، إضافة وإدارة الموظفين متاحة لحسابات المالك فقط.');
+    }
+    final ownerUserType = ownerData['userType'] as String? ?? 'cafe';
+    final ownerPlatformType = ownerData['platformType'] as String? ?? 'mobile';
+    final ownerProjectName = ownerData['projectName'] as String? ?? '';
+    final ownerIsVip = ownerData['isVip'] as bool? ?? false;
+
+    // 2. Create Firebase Auth user
+    final cred = await _authService.createAuthUser(
+      email: email.trim(),
+      password: password.trim(),
+    );
+    final employeeUid = cred.user!.uid;
+
+    final now = Timestamp.now();
+    final batch = _firestore.batch();
+
+    // 3. Create top-level user document for auth/login
+    final userRef = _userRef(employeeUid);
+    final userDoc = {
+      'uid': employeeUid,
+      'fullName': name.trim(),
+      'name': name.trim(),
+      'email': email.trim().toLowerCase(),
+      'phoneNumber': '',
+      'accountStatus': 'active',
+      'role': 'employee',
+      'ownerUid': ownerUid,
+      'rolePreset': rolePreset,
+      'permissions': permissions,
+      'userType': ownerUserType,
+      'platformType': ownerPlatformType,
+      'projectName': ownerProjectName,
+      'isVip': ownerIsVip,
+      'subscriptionStatus': 'active',
+      'subscriptionSuspended': false,
+      'loginAllowed': true,
+      'authAccessRevoked': false,
+      'createdAt': now,
+      'stats': {
+        'customers': 0,
+        'debts': 0,
+        'employees': 0,
+        'transactions': 0,
+        'expenses': 0,
+      },
+      'searchKeywords': SearchKeywordsBuilder.build(
+        uid: employeeUid,
+        fullName: name.trim(),
+        email: email.trim(),
+        projectName: ownerProjectName,
+      ),
+    };
+    batch.set(userRef, userDoc);
+
+    // 4. Create subcollection record in owner's app_employees
+    final teamRef = _userRef(ownerUid)
+        .collection(AdminConstants.appEmployeesSubcollection)
+        .doc(employeeUid);
+    final empDoc = {
+      'authUid': employeeUid,
+      'name': name.trim(),
+      'email': email.trim().toLowerCase(),
+      'rolePreset': rolePreset,
+      'permissions': permissions,
+      'accountStatus': 'active',
+      'createdAt': now,
+    };
+    batch.set(teamRef, empDoc);
+
+    // 5. Increment employee count in owner's stats
+    batch.update(_userRef(ownerUid), {
+      'stats.employees': FieldValue.increment(1),
+    });
+
+    await batch.commit();
+
+    await _audit.log(
+      admin: admin,
+      actionType: 'CREATE_APP_EMPLOYEE',
+      targetUserId: employeeUid,
+      targetUserName: name.trim(),
+      metadata: {
+        'ownerUid': ownerUid,
+        'rolePreset': rolePreset,
+        'permissionsCount': permissions.length,
+      },
+    );
+
+    return TenantEmployee(
+      id: employeeUid,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      rolePreset: rolePreset,
+      accountStatus: 'active',
+      permissions: permissions,
+      createdAt: now.toDate(),
+    );
+  }
+
+  @override
+  Future<void> updateAppEmployee({
+    required String ownerUid,
+    required String employeeId,
+    required String name,
+    required String rolePreset,
+    required List<String> permissions,
+  }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersWrite);
+
+    final batch = _firestore.batch();
+    final userRef = _userRef(employeeId);
+    batch.update(userRef, {
+      'fullName': name.trim(),
+      'name': name.trim(),
+      'rolePreset': rolePreset,
+      'permissions': permissions,
+      'lastPermissionsUpdatedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    final teamRef = _userRef(ownerUid)
+        .collection(AdminConstants.appEmployeesSubcollection)
+        .doc(employeeId);
+    batch.update(teamRef, {
+      'name': name.trim(),
+      'rolePreset': rolePreset,
+      'permissions': permissions,
+      'lastUpdatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    await _audit.log(
+      admin: admin,
+      actionType: 'UPDATE_APP_EMPLOYEE',
+      targetUserId: employeeId,
+      targetUserName: name.trim(),
+      metadata: {
+        'ownerUid': ownerUid,
+        'rolePreset': rolePreset,
+        'permissionsCount': permissions.length,
+      },
+    );
+  }
+
+  @override
+  Future<void> toggleEmployeeStatus({
+    required String ownerUid,
+    required String employeeId,
+    required String newStatus,
+  }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersWrite);
+
+    final batch = _firestore.batch();
+    final userRef = _userRef(employeeId);
+    batch.update(userRef, {
+      'accountStatus': newStatus,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    final teamRef = _userRef(ownerUid)
+        .collection(AdminConstants.appEmployeesSubcollection)
+        .doc(employeeId);
+    batch.update(teamRef, {
+      'accountStatus': newStatus,
+      'lastUpdatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    await _audit.log(
+      admin: admin,
+      actionType: 'TOGGLE_EMPLOYEE_STATUS',
+      targetUserId: employeeId,
+      metadata: {
+        'ownerUid': ownerUid,
+        'newStatus': newStatus,
+      },
+    );
+  }
+
+  @override
+  Future<void> deleteAppEmployee({
+    required String ownerUid,
+    required String employeeId,
+  }) async {
+    final admin = await _requireAdmin();
+    _requirePermission(admin, AdminPermissions.usersWrite);
+
+    final batch = _firestore.batch();
+    final teamRef = _userRef(ownerUid)
+        .collection(AdminConstants.appEmployeesSubcollection)
+        .doc(employeeId);
+    batch.delete(teamRef);
+
+    final userRef = _userRef(employeeId);
+    batch.update(userRef, {
+      'accountStatus': 'deleted',
+      'deletedAt': FieldValue.serverTimestamp(),
+    });
+
+    batch.update(_userRef(ownerUid), {
+      'stats.employees': FieldValue.increment(-1),
+    });
+
+    await batch.commit();
+
+    await _audit.log(
+      admin: admin,
+      actionType: 'DELETE_APP_EMPLOYEE',
+      targetUserId: employeeId,
+      metadata: {
+        'ownerUid': ownerUid,
+      },
+    );
+  }
+
+  @override
   Future<AppSettings> getAppSettings() async {
     final doc = await _firestore
         .collection(AdminConstants.systemSettingsCollection)
@@ -632,6 +921,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
       'vat': data['vat'] ?? '',
       'taxRate': data['taxRate'],
       'address': data['address'] ?? '',
+      'currency': data['currency'] ?? CurrencyEntity.defaultCurrency.toMap(),
       'subscriptionEnd': endDate,
       'gracePeriodEnd': Timestamp.fromDate(graceEndDate),
       'loginAllowed': true,
@@ -688,10 +978,16 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
     if (data['fullName'] != null) updates['fullName'] = data['fullName'];
     if (data['phoneNumber'] != null) updates['phoneNumber'] = data['phoneNumber'];
-    if (data['email'] != null) updates['email'] = (data['email'] as String).toLowerCase();
+    // Email is immutable for existing users to maintain auth consistency
     if (data['userType'] != null) updates['userType'] = data['userType'];
     if (data['platformType'] != null) updates['platformType'] = data['platformType'];
     if (data['isVip'] != null) updates['isVip'] = data['isVip'];
+    if (data['projectName'] != null) updates['projectName'] = data['projectName'];
+    if (data['crn'] != null) updates['crn'] = data['crn'];
+    if (data['vat'] != null) updates['vat'] = data['vat'];
+    if (data['taxRate'] != null) updates['taxRate'] = data['taxRate'];
+    if (data['address'] != null) updates['address'] = data['address'];
+    if (data['currency'] != null) updates['currency'] = data['currency'];
 
     updates['searchKeywords'] = SearchKeywordsBuilder.build(
       uid: uid,
@@ -1322,6 +1618,12 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
     final batch = _firestore.batch();
     for (final doc in usersSnap.docs) {
+      final data = doc.data();
+      final role = data['role'] as String?;
+      final ownerUid = data['ownerUid'] as String?;
+      final isEmployee = role == 'employee' || (ownerUid != null && ownerUid.isNotEmpty);
+      if (isEmployee) continue;
+
       batch.update(doc.reference, {
         'accountStatus': 'expired',
         'subscriptionStatus': 'expired',

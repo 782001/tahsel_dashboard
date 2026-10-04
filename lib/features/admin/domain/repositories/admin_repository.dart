@@ -53,6 +53,30 @@ abstract class AdminRepository {
     required String rolePreset,
     required List<String> permissions,
   });
+  Future<Either<Failure, TenantEmployee>> createAppEmployee({
+    required String ownerUid,
+    required String name,
+    required String email,
+    required String password,
+    required String rolePreset,
+    required List<String> permissions,
+  });
+  Future<Either<Failure, void>> updateAppEmployee({
+    required String ownerUid,
+    required String employeeId,
+    required String name,
+    required String rolePreset,
+    required List<String> permissions,
+  });
+  Future<Either<Failure, void>> toggleEmployeeStatus({
+    required String ownerUid,
+    required String employeeId,
+    required String newStatus,
+  });
+  Future<Either<Failure, void>> deleteAppEmployee({
+    required String ownerUid,
+    required String employeeId,
+  });
   Future<Either<Failure, AppSettings>> getAppSettings();
   Future<Either<Failure, PaginatedResult<BroadcastNotification>>> getNotifications({
     int limit,

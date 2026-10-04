@@ -27,24 +27,36 @@ class AppUserModel extends AppUser {
     super.vat,
     super.taxRate,
     super.address,
+    super.currency,
   });
 
   factory AppUserModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
     final statsMap = data['stats'] as Map<String, dynamic>? ?? {};
     final ownerUid = data['ownerUid'] as String?;
-    final role = data['role'] as String? ?? (ownerUid != null ? 'employee' : 'owner');
+    final role = data['role'] as String? ?? ((ownerUid != null && ownerUid.isNotEmpty) ? 'employee' : 'owner');
+    final isEmployee = role == 'employee' || (ownerUid != null && ownerUid.isNotEmpty);
     final fullName = (data['fullName'] as String?)?.isNotEmpty == true
         ? data['fullName'] as String
         : (data['name'] as String? ?? '');
+
+    String accountStatus = data['accountStatus'] as String? ?? 'active';
+    if (isEmployee && accountStatus == 'expired') {
+      final reason = data['authAccessReason'] as String?;
+      accountStatus = (reason == 'grace_period_expired') ? 'active' : 'disabled';
+    }
+
+    final subscriptionStatus = isEmployee
+        ? 'active'
+        : (data['subscriptionStatus'] as String? ?? 'expired');
 
     return AppUserModel(
       uid: doc.id,
       fullName: fullName,
       email: data['email'] ?? '',
       phoneNumber: data['phoneNumber'] ?? '',
-      accountStatus: data['accountStatus'] ?? 'active',
-      subscriptionStatus: data['subscriptionStatus'] ?? 'expired',
+      accountStatus: accountStatus,
+      subscriptionStatus: subscriptionStatus,
       createdAt: _toDate(data['createdAt']),
       lastLogin: _toDate(data['lastLogin']),
       lastActive: _toDate(data['lastActive']),
@@ -62,6 +74,9 @@ class AppUserModel extends AppUser {
       vat: data['vat'] as String?,
       taxRate: (data['taxRate'] as num?)?.toDouble(),
       address: data['address'] as String?,
+      currency: data['currency'] is Map
+          ? (data['currency']['code'] as String?)
+          : (data['currency'] as String?),
       stats: UserStats(
         customers: statsMap['customers'] ?? 0,
         debts: statsMap['debts'] ?? 0,

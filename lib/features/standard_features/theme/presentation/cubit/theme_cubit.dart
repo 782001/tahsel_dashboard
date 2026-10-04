@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'package:tahsel_dashboard/core/services/injection_container.dart';
 import 'package:tahsel_dashboard/core/storage/cashhelper.dart';
 import 'package:tahsel_dashboard/features/standard_features/theme/presentation/cubit/theme_state.dart';
@@ -10,7 +11,7 @@ extension ThemeContext on BuildContext {
   ThemeCubit get theme => read<ThemeCubit>();
 }
 
-class ThemeCubit extends Cubit<ThemeState> {
+class ThemeCubit extends SafeCubit<ThemeState> {
   final CashHelper cashHelper;
   static const String _themeKey = 'isDarkMode';
 

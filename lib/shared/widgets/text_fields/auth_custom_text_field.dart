@@ -12,7 +12,7 @@ class AuthTextFormField extends StatefulWidget {
   final IconData? suffixIcon;
   final VoidCallback? suffixTap;
   final String? Function(String?)? validator;
-  final bool enabled;
+   final bool enabled;
   final String? hintText;
   final double height;
   final double borderRadius;
@@ -21,6 +21,8 @@ class AuthTextFormField extends StatefulWidget {
   final int? maxLines;
   final FocusNode? focusNode;
   final Widget? headerTrailingWidget;
+  final Widget? suffixWidget;
+  final Widget? prefixWidget;
 
   const AuthTextFormField({
     super.key,
@@ -40,6 +42,8 @@ class AuthTextFormField extends StatefulWidget {
     this.maxLines = 1,
     this.focusNode,
     this.headerTrailingWidget,
+    this.suffixWidget,
+    this.prefixWidget,
   });
 
   @override
@@ -74,7 +78,11 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             if (widget.headerTrailingWidget != null)
-              widget.headerTrailingWidget!,
+              Flexible(
+                child: widget.headerTrailingWidget!,
+              ),
+            if (widget.headerTrailingWidget != null)
+              SizedBox(width: 8.w),
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
@@ -86,6 +94,7 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
                     fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -104,13 +113,21 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
               onChanged: widget.onChanged,
               maxLines: widget.maxLines,
               focusNode: _focusNode,
+              style: TextStyle(
+                color: widget.enabled
+                    ? AppColors.textColor
+                    : AppColors.textColor.withValues(alpha: 0.7),
+                fontSize: 14.sp,
+              ),
               decoration: InputDecoration(
                 hintText: widget.hintText,
                 hintStyle: TextStyles.font14Weight400RightAligned().copyWith(
                   color: AppColors.textColor2,
                 ),
                 filled: true,
-                fillColor: AppColors.textColor.withValues(alpha: 0.1),
+                fillColor: widget.enabled
+                    ? AppColors.textColor.withValues(alpha: 0.1)
+                    : AppColors.textColor.withValues(alpha: 0.04),
                 contentPadding: EdgeInsets.symmetric(
                   vertical: 14.h,
                   horizontal: 16.w,
@@ -130,6 +147,13 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
                   borderRadius: BorderRadius.circular(widget.borderRadius.r),
                   borderSide: BorderSide.none,
                 ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(widget.borderRadius.r),
+                  borderSide: BorderSide(
+                    color: AppColors.textColor.withValues(alpha: 0.08),
+                    width: 1.w,
+                  ),
+                ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(widget.borderRadius.r),
                   borderSide: BorderSide(color: Colors.redAccent, width: 1.w),
@@ -138,29 +162,36 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
                   borderRadius: BorderRadius.circular(widget.borderRadius.r),
                   borderSide: BorderSide(color: Colors.redAccent, width: 1.w),
                 ),
-                suffixIcon: widget.obscureText
-                    ? IconButton(
-                        icon: Icon(
-                          _obscureText
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: widget.suffixIconColor ?? AppColors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureText = !_obscureText;
-                          });
-                        },
-                      )
-                    : widget.suffixIcon != null
-                    ? IconButton(
-                        icon: Icon(
-                          widget.suffixIcon!,
-                          color: widget.suffixIconColor ?? AppColors.grey,
-                        ),
-                        onPressed: widget.suffixTap,
-                      )
-                    : null,
+                prefixIcon: widget.prefixWidget,
+                suffixIcon: widget.suffixWidget ??
+                    (widget.obscureText
+                        ? IconButton(
+                            icon: Icon(
+                              _obscureText
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: widget.suffixIconColor ?? AppColors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureText = !_obscureText;
+                              });
+                            },
+                          )
+                        : widget.suffixIcon != null
+                            ? IconButton(
+                                icon: Icon(
+                                  widget.suffixIcon!,
+                                  color: widget.suffixIconColor ??
+                                      (!widget.enabled
+                                          ? AppColors.subTitleColor
+                                              .withValues(alpha: 0.6)
+                                          : AppColors.grey),
+                                ),
+                                onPressed:
+                                    widget.enabled ? widget.suffixTap : null,
+                              )
+                            : null),
                 isDense: true,
                 errorStyle: TextStyles.font14Weight400RightAligned().copyWith(
                   color: Colors.red,

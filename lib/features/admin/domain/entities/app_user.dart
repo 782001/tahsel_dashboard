@@ -46,6 +46,7 @@ class AppUser extends Equatable {
   final String? vat;
   final double? taxRate;
   final String? address;
+  final String? currency;
 
   const AppUser({
     required this.uid,
@@ -72,6 +73,7 @@ class AppUser extends Equatable {
     this.vat,
     this.taxRate,
     this.address,
+    this.currency,
   });
 
   bool get isEmployee =>
@@ -121,5 +123,6 @@ class AppUser extends Equatable {
         vat,
         taxRate,
         address,
+        currency,
       ];
 }

@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel_dashboard/core/base_cubit/safe_cubit.dart';
 import 'package:tahsel_dashboard/core/base_usecase/base_usecase.dart';
 import 'package:tahsel_dashboard/features/admin/domain/usecases/admin_usecases.dart';
 import 'package:tahsel_dashboard/features/admin/presentation/cubit/auth/auth_state.dart';
 
-class AuthCubit extends Cubit<AuthState> {
+class AuthCubit extends SafeCubit<AuthState> {
   AuthCubit({
     required SignInAdminUseCase signIn,
     required VerifyAdminSessionUseCase verifySession,
